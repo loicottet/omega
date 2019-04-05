@@ -6,7 +6,7 @@ configurations {
 }
 
 signing {
-    required = { gradle.taskGraph.hasTask(uploadPublished) && !version.endsWith("SNAPSHOT") }
+    required = false //{ gradle.taskGraph.hasTask(uploadPublished) && !version.endsWith("SNAPSHOT") }
     sign configurations.archives
 }
 
@@ -23,7 +23,7 @@ uploadPublished {
         // checkPasswords()
         repositories {
             mavenDeployer {
-                def repoUrl = getStringProperty('publishRepositoryUrl', 'https://nexus.gluonhq.com/nexus/content/repository/releases/');
+                def repoUrl = getStringProperty('publishRepositoryUrl', 'https://nexus.gluonhq.com/nexus/content/repositories/releases/');
                 configurePOM(pom)
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
                 snapshotRepository(url: "https://nexus.gluonhq.com/nexus/content/repositories/snapshots/") {
