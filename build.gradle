@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply from: file('mavenPublish.gradle')
 
 group = "com.gluonhq"
-version = "0.0.2-SNAPSHOT"
+version = "0.0.2"
 
 mainClassName = 'com.gluonhq.omega.Omega'
 
