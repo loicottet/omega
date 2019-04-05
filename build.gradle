@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'application'
-apply plugin: 'maven'
-apply from: file('mavenPublish.gradle')
+apply plugin: 'maven-publish'
 
 group = "com.gluonhq"
 version = "0.0.3-SNAPSHOT"
@@ -38,4 +37,28 @@ dependencies {
     runtimeOnly "org.bytedeco.javacpp-presets:llvm:6.0.1-1.4.2"
     runtimeOnly "org.bytedeco.javacpp-presets:llvm:6.0.1-1.4.2:$platform"
     runtimeOnly "org.bytedeco:javacpp:1.4.2"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = project.group
+            artifactId = 'omega'
+            version = project.version
+        }
+    }
+    repositories {
+        maven {
+            def repositoryUrl = project.hasProperty('repositoryUrl') ? project.getProperty('repositoryUrl') : 'https://nexus.gluonhq.com/nexus/content/repositories/snapshots/'
+            def repositoryUsername = project.hasProperty('repositoryUsername') ? project.getProperty('repositoryUsername') : project.getProperty('gluonNexusUsername')
+            def repositoryPassword = project.hasProperty('repositoryPassword') ? project.getProperty('repositoryPassword') : project.getProperty('gluonNexusPassword')
+
+            url repositoryUrl
+            credentials {
+                username repositoryUsername
+                password repositoryPassword
+            }
+        }
+    }
 }

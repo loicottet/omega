@@ -109,7 +109,7 @@ public class SVMBridge {
         SVMBridge.OMEGADEPSROOT = omegaConfig.getDepsRoot();
         SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
         SVMBridge.USE_JAVAFX = omegaConfig.isUseJavaFX();
-        SVMBridge.USE_LLVM = "llvm".equals(Omega.getConfig().getBackend());
+        SVMBridge.USE_LLVM = "llvm".equals(omegaConfig.getBackend());
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
         SVMBridge.CUSTOM_JNI_LIST.addAll(omegaConfig.getJniList());
         SVMBridge.CUSTOM_DELAY_INIT_LIST.addAll(omegaConfig.getDelayInitList());
