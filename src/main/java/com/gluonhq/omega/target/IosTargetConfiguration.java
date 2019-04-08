@@ -453,7 +453,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         try {
             NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
             if (!inited) {
-                dict.put("CFBundleIdentifier", Omega.getConfig().getMainClassName());
+                // ModuleName not supported
+                String className = Omega.getConfig().getMainClassName();
+                if (className.contains("/")) {
+                    className = className.substring(className.indexOf("/") + 1);
+                }
+                dict.put("CFBundleIdentifier", className);
                 dict.put("CFBundleExecutable", Omega.getConfig().getAppName() + "App");
                 dict.put("CFBundleName", Omega.getConfig().getAppName());
                 dict.saveAsXML(plist);
