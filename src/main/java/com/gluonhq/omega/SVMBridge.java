@@ -150,6 +150,107 @@ public class SVMBridge {
         setModulePath();
         setUpgradeModulePath();
         setRuntimeArgs(suffix);
+
+        String cp = classPath.stream()
+                .collect(Collectors.joining(File.pathSeparator));
+
+        String mp = modulePath.stream()
+                .collect(Collectors.joining(File.pathSeparator));
+
+        String ump = upgradeModulePath.stream()
+                .collect(Collectors.joining(File.pathSeparator));
+
+        LinkedList<String> linkedList = new LinkedList<>();
+        linkedList.add("-XX:+UnlockExperimentalVMOptions");
+        linkedList.add("-XX:+EnableJVMCI");
+        linkedList.add("-XX:-UseJVMCICompiler");
+        linkedList.add("-Dtruffle.TrustAllTruffleRuntimeProviders=true");
+        linkedList.add("-Dsubstratevm.IgnoreGraalVersionCheck=true");
+        linkedList.add("-Djava.lang.invoke.stringConcat=BC_SB");
+        if (suffix.startsWith("ios")) {
+            linkedList.add("-Dtargetos.name=iOS");
+        }
+        linkedList.add("-Xss10m");
+        linkedList.add("-Xms1g");
+        linkedList.add("-Xmx13441813704");
+        linkedList.add("-Dprism.marlinrasterizer=false");
+        linkedList.add("-Duser.country=US");
+        linkedList.add("-Duser.language=en");
+        linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalVersion());
+        linkedList.add("-Xdebug");
+        linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
+        linkedList.add("-Dorg.graalvm.version=" + Omega.getConfig().getGraalVersion());
+        linkedList.add("-Dcom.oracle.graalvm.isaot=true");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.runtime=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.amd64=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.hotspot=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.services=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.common=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code.site=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.compiler/org.graalvm.compiler.options=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("jdk.unsupported/sun.reflect=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/jdk.internal.module=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/jdk.internal.ref=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/jdk.internal.reflect=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/java.lang=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/java.lang.invoke=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/java.lang.ref=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/java.net=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/java.nio=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/java.util=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("org.graalvm.sdk/org.graalvm.nativeimage.impl=ALL-UNNAMED");
+        linkedList.add("--module-path");
+        linkedList.add(mp);
+        linkedList.add("--upgrade-module-path");
+        linkedList.add(ump);
+        linkedList.add("-cp");
+        linkedList.add(cp);
+
+        ProcessBuilder compileBuilder = new ProcessBuilder("java");
+        compileBuilder.command().addAll(linkedList);
+        compileBuilder.command().add("com.oracle.svm.hosted.NativeImageGeneratorRunner");
+        List<String> runtimeArgs = Omega.getRuntimeArgs();
+        List<String> bundles = getBundlesList();
+        bundles.addAll(Omega.getConfig().getBundles());
+        if (! bundles.isEmpty()) {
+            runtimeArgs.add("-H:IncludeResourceBundles=" +
+                    bundles.stream().collect(Collectors.joining(",")));
+        }
+        compileBuilder.command().addAll(runtimeArgs);
+
+        compileBuilder.directory(workDir.toFile());
+        compileBuilder.redirectErrorStream(true);
+        String compileCmd = String.join(" ", compileBuilder.command());
+        System.err.println("compileCmd = " + compileCmd);
+        Process compileProcess = compileBuilder.start();
+        FileOps.mergeProcessOutput(compileProcess.getInputStream());
+        int result = compileProcess.waitFor();
+        System.err.println("result of compile = " + result);
+        if (result != 0) {
+            throw new RuntimeException("Error compilingx");
+        }
     }
 
     public static void linkSetup() {
