@@ -330,7 +330,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
     private void launchOnDevice(String launchDir) throws IOException {
         logDebug("launchOnDevice at "+launchDir);
-        generateDsym(appPath.toFile(), appId, true);
+        generateDsym(appPath.toFile(), appId + "App", true);
 
         logDebug("Install app on device");
         mobileDeviceBridge = MobileDeviceBridge.instance;

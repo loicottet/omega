@@ -249,7 +249,7 @@ public class SVMBridge {
         int result = compileProcess.waitFor();
         System.err.println("result of compile = " + result);
         if (result != 0) {
-            throw new RuntimeException("Error compilingx");
+            throw new RuntimeException("Error compiling");
         }
     }
 
