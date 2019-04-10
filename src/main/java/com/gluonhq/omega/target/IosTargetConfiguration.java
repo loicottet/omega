@@ -41,6 +41,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
 
+import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class IosTargetConfiguration extends DarwinTargetConfiguration {
@@ -252,8 +253,10 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         // TODO: include symbols from project, like _Java_com_gluonhq*
         linkBuilder.command().add("-Wl,-exported_symbols_list," + appPath.toString() + "/release.symbols");
 
-        javafxLibs.forEach(name ->
-                linkBuilder.command().add("-Wl,-all_load," + SVMBridge.JFXSDK + "/lib/lib" + name + ".a"));
+        if (USE_JAVAFX) {
+            javafxLibs.forEach(name ->
+                    linkBuilder.command().add("-Wl,-all_load," + SVMBridge.JFXSDK + "/lib/lib" + name + ".a"));
+        }
 
         Files.list(libPath)
                 .filter(p -> p.toString().endsWith(".a"))

@@ -52,7 +52,7 @@ public class SVMBridge {
 
     public static String OMEGADEPSROOT;
     public static String JFXSDK;
-    private static boolean USE_JAVAFX;
+    public static boolean USE_JAVAFX;
     private static boolean USE_LLVM;
 
     private static final List<String> CUSTOM_REFLECTION_LIST = new ArrayList<>();
