@@ -178,7 +178,7 @@ public class SVMBridge {
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalVersion());
         if (configuration.isCrossCompile()) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform\\$DARWIN_AArch64");
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
         }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
@@ -307,9 +307,13 @@ public class SVMBridge {
                 "-H:Path=" + workDir,
                 "-H:CLibraryPath=" + Paths.get(OMEGADEPSROOT).resolve(hostedNative).toFile().getAbsolutePath(),
                 "-H:Class=" + mainClass,
-                "-H:ReflectionConfigurationFiles=" + workDir + "/reflectionconfig-" + suffix + ".json",
-                "-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json",
-                "-H:+ReportExceptionStackTraces"));
+                "-H:+ReportExceptionStackTraces",
+                "-H:ReflectionConfigurationFiles=" + workDir + "/reflectionconfig-" + suffix + ".json"
+                ));
+        if (USE_JAVAFX) {
+            // don't add jni config for helloworld, as File parsing gives exceptions on AArch64
+            runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
+        }
 
         if (config.isCrossCompile() || Omega.macHost) {
             runtimeArgs.add("-H:Kind=SHARED_LIBRARY");
