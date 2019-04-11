@@ -177,6 +177,9 @@ public class SVMBridge {
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalVersion());
+        if (configuration.isCrossCompile()) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform\\$DARWIN_AArch64");
+        }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
         linkedList.add("-Dorg.graalvm.version=" + Omega.getConfig().getGraalVersion());
@@ -187,6 +190,8 @@ public class SVMBridge {
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.amd64=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.aarch64=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED");
         linkedList.add("--add-exports");
