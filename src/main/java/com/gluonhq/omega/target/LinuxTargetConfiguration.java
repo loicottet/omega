@@ -31,6 +31,7 @@ import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -97,6 +98,16 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
+        Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
+                .filter(s -> s.toString().endsWith(".so"))
+                .forEach(f -> {
+                    try {
+                        Files.copy(f, gvmPath.resolve(f.getFileName()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
         Path workDir = this.gvmPath.getParent().resolve("linux").resolve(appName);
         System.err.println("Compiling additional sources to " + workDir);
         Files.createDirectories(workDir);

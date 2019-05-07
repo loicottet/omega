@@ -31,6 +31,7 @@ import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.javafx.font.coretext.CTFactory",
             "com.sun.scenario.effect.impl.es2.ES2ShaderSource",
             "com.sun.glass.ui.mac.MacApplication",
+            "com.sun.glass.ui.mac.MacPlatformFactory",
             "com.sun.glass.ui.mac.MacGestureSupport"
     );
 
@@ -94,6 +96,16 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
+        Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
+                .filter(s -> s.toString().endsWith(".dylib"))
+                .forEach(f -> {
+                    try {
+                        Files.copy(f, gvmPath.resolve(f.getFileName()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
         Path workDir = this.gvmPath.getParent().resolve("mac").resolve(appName);
         Files.createDirectories(workDir);
         logDebug("Compiling additional sources to " + workDir);
