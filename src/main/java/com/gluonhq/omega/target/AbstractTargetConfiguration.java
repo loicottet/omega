@@ -81,6 +81,23 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.javafx.geom.Path2D");
 
     private static final List<String> javafxReflectionClassList = new ArrayList<>(Arrays.asList(
+            "javafx.scene.control.Control",
+            "javafx.scene.layout.Pane",
+            "javafx.scene.layout.Region",
+            "javafx.scene.shape.Shape",
+            "javafx.scene.transform.Transform",
+            "javafx.scene.Camera",
+            "javafx.scene.Node",
+            "javafx.scene.Parent",
+            "javafx.scene.Scene",
+            "javafx.scene.ParallelCamera",
+            "javafx.scene.text.Font",
+            "javafx.scene.text.Text",
+            "javafx.scene.text.TextFlow",
+            "javafx.stage.Stage",
+            "javafx.stage.Window",
+            "javafx.scene.image.Image",
+            "com.sun.javafx.scene.control.skin.Utils",
             "com.sun.javafx.tk.quantum.QuantumToolkit",
             "com.sun.prism.es2.ES2Pipeline",
             "com.sun.prism.shader.AlphaOne_Color_Loader",
@@ -195,9 +212,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.scenario.effect.impl.prism.ps.PPSLinearConvolveShadowPeer",
             "com.sun.scenario.effect.impl.prism.ps.PPSLinearConvolvePeer",
             "com.sun.scenario.effect.impl.prism.ps.PPSBlend_SRC_INPeer",
-            "com.sun.xml.internal.stream.XMLInputFactoryImpl",
-            "javafx.scene.text.Text",
-            "javafx.scene.text.TextFlow"
+            "com.sun.xml.internal.stream.XMLInputFactoryImpl"
     ));
 
     private static final List<String> rerunClinitList = Arrays.asList(
