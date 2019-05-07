@@ -31,8 +31,6 @@ import com.gluonhq.omega.target.AbstractTargetConfiguration;
 import com.gluonhq.omega.target.LinuxTargetConfiguration;
 import com.gluonhq.omega.target.MacosTargetConfiguration;
 import com.gluonhq.omega.util.FileOps;
-import com.oracle.svm.core.SubstrateUtil;
-import com.oracle.svm.driver.NativeImage;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -98,11 +96,11 @@ public class SVMBridge {
     );
 
     private static final List<String> bundlesList = new ArrayList<>(Arrays.asList(
-            "com/sun/javafx/scene/control/skin/resources/controls"
+            "com/sun/javafx/scene/control/skin/resources/controls",
+            "com.sun.javafx.tk.quantum.QuantumMessagesBundle"
     ));
 
     private static AbstractTargetConfiguration config;
-    private static SvmConfiguration svmConfiguration;
 
     private static void init() {
         Config omegaConfig = Omega.getConfig();
@@ -143,8 +141,6 @@ public class SVMBridge {
                 config instanceof MacosTargetConfiguration ? "mac" : "ios";
         createReflectionConfig(suffix);
         createJNIConfig(suffix);
-
-        svmConfiguration = new SVMBridge.SvmConfiguration(config.isCrossCompile());
 
         setClassPath();
         setModulePath();
@@ -202,10 +198,10 @@ public class SVMBridge {
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.common=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code.site=ALL-UNNAMED");
-        linkedList.add("--add-exports");
-        linkedList.add("jdk.internal.vm.compiler/org.graalvm.compiler.options=ALL-UNNAMED");
         linkedList.add("--add-opens");
         linkedList.add("jdk.unsupported/sun.reflect=ALL-UNNAMED");
+        linkedList.add("--add-opens");
+        linkedList.add("java.base/jdk.internal.logger=ALL-UNNAMED");
         linkedList.add("--add-opens");
         linkedList.add("java.base/jdk.internal.module=ALL-UNNAMED");
         linkedList.add("--add-opens");
@@ -260,31 +256,59 @@ public class SVMBridge {
 
     public static void linkSetup() {
         init();
-        if (svmConfiguration == null) {
-            svmConfiguration = new SVMBridge.SvmConfiguration(false);
-        }
     }
 
     private static void setClassPath() {
-        classPath = svmConfiguration.getBuilderClasspath().stream()
+        classPath = getBuilderClasspath().stream()
                 .map(Path::toString)
                 .collect(Collectors.toList());
+    }
+
+    private static List<Path> getBuilderClasspath() {
+        List<Path> answer = new LinkedList<>();
+//        if (useJavaModules()) { // TODO
+            answer.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
+            answer.add(Paths.get(OMEGADEPSROOT, "graal.jar"));
+//        }
+        answer.add(Paths.get(OMEGADEPSROOT, "svm.jar"));
+        answer.add(Paths.get(OMEGADEPSROOT, "objectfile.jar"));
+        answer.add(Paths.get(OMEGADEPSROOT, "pointsto.jar"));
+
+        if (USE_LLVM) {
+            answer.add(Paths.get(OMEGADEPSROOT, "svm-llvm.jar"));
+            answer.add(Paths.get(OMEGADEPSROOT, "graal-llvm.jar"));
+            answer.add(Paths.get(OMEGADEPSROOT, "llvm-platform-specific.jar"));
+            answer.add(Paths.get(OMEGADEPSROOT, "llvm-wrapper.jar"));
+            answer.add(Paths.get(OMEGADEPSROOT, "javacpp.jar"));
+        }
+        return answer;
     }
 
     private static void setModulePath() {
-        modulePath = svmConfiguration.getBuilderModulePath().stream()
+        modulePath = getBuilderModulePath().stream()
                 .map(Path::toString)
                 .collect(Collectors.toList());
+    }
+
+    private static List<Path> getBuilderModulePath() {
+        List<Path> paths = new ArrayList<>();
+        paths.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
+        paths.add(Paths.get(OMEGADEPSROOT,"truffle-api.jar"));
+        return paths;
     }
 
     private static void setUpgradeModulePath() {
-        upgradeModulePath = svmConfiguration.getBuilderUpgradeModulePath().stream()
+        upgradeModulePath = getBuilderUpgradeModulePath().stream()
                 .map(Path::toString)
                 .collect(Collectors.toList());
     }
 
+    private static List<Path> getBuilderUpgradeModulePath() {
+        return Arrays.asList(Paths.get(OMEGADEPSROOT,"graal.jar"));
+    }
+
     private static void setRuntimeArgs(String suffix) {
-        String cp = svmConfiguration.getImageClasspath().stream()
+        String cp = classDir.stream()
                 .map(Path::toString)
                 .filter(s -> !s.contains("javafx-"))
                 .collect(Collectors.joining(File.pathSeparator));
@@ -320,11 +344,11 @@ public class SVMBridge {
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
         if (USE_JAVAFX) {
-            delayClinitList.forEach(clinit -> runtimeArgs.add("-H:DelayClassInitialization=" + clinit));
+//            delayClinitList.forEach(clinit -> runtimeArgs.add("-H:DelayClassInitialization=" + clinit));
         }
         CUSTOM_DELAY_INIT_LIST.forEach(clinit -> runtimeArgs.add("-H:DelayClassInitialization=" + clinit));
         if (USE_JAVAFX) {
-            config.getRerunClinitList().forEach(clinit -> runtimeArgs.add("-H:RerunClassInitialization=" + clinit));
+//            config.getRerunClinitList().forEach(clinit -> runtimeArgs.add("-H:RerunClassInitialization=" + clinit));
         }
         runtimeArgs.addAll(Arrays.asList(
                 "-H:NumberOfThreads=1",
@@ -422,171 +446,6 @@ public class SVMBridge {
             return bundlesList;
         }
         return new ArrayList<>();
-    }
-
-    private final static class SvmConfiguration implements NativeImage.BuildConfiguration {
-
-        boolean cross;
-
-        public SvmConfiguration(boolean cross) {
-            this.cross = cross;
-            getBuilderCLibrariesPaths();
-        }
-
-        @Override
-        public Path getWorkingDirectory() {
-            System.err.println("WorkingDir asked, return " + workDir);
-            return workDir;
-        }
-
-        @Override
-        public Path getJavaExecutable() {
-            return getJavaHome().resolve("bin/java");
-        }
-
-        @Override
-        public List<Path> getBuilderClasspath() {
-            List<Path> answer = new LinkedList<>();
-            if (useJavaModules()) {
-                answer.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
-                answer.add(Paths.get(OMEGADEPSROOT, "compiler.jar"));
-            }
-            answer.add(Paths.get(OMEGADEPSROOT, "svm.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "objectfile.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "pointsto.jar"));
-
-            if (USE_LLVM) {
-                answer.add(Paths.get(OMEGADEPSROOT, "svm-llvm.jar"));
-                answer.add(Paths.get(OMEGADEPSROOT, "graal-llvm.jar"));
-                answer.add(Paths.get(OMEGADEPSROOT, "llvm-platform-specific.jar"));
-                answer.add(Paths.get(OMEGADEPSROOT, "llvm-wrapper.jar"));
-                answer.add(Paths.get(OMEGADEPSROOT, "javacpp.jar"));
-            }
-            return answer;
-        }
-
-        @Override
-        public List<Path> getBuilderCLibrariesPaths() {
-            String hostedNative = Omega.macHost ?
-                    "svm-hosted-native-darwin-amd64.jar" :
-                    "svm-hosted-native-linux-amd64.jar";
-            ProcessBuilder pb = new ProcessBuilder("tar", "xvf",
-                    Paths.get(OMEGADEPSROOT).resolve(hostedNative).toFile().getAbsolutePath());
-            pb.directory(Paths.get(OMEGADEPSROOT).toFile());
-            File f = Paths.get(OMEGADEPSROOT).toFile();
-            System.err.println("dir = "+f);
-            try {
-                pb.redirectErrorStream(true);
-                Process process = pb.start();
-                FileOps.mergeProcessOutput(process.getInputStream());
-                int err = process.waitFor();
-                System.err.println("Result of untar = "+err);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            List<Path> answer = new LinkedList<>();
-            answer.add(Paths.get(OMEGADEPSROOT));
-            return answer;
-        }
-
-        @Override
-        public Path getBuilderInspectServerPath() {
-            return null;
-        }
-
-        @Override
-        public List<Path> getImageProvidedClasspath() {
-            List<Path> answer = new LinkedList<>();
-            answer.add(Paths.get(OMEGADEPSROOT, "library-support.jar"));
-            return answer;
-        }
-
-        private Path getJVMCILibraryRoot() {
-            return getJavaHome().resolve("lib/jvmci");
-        }
-
-        @Override
-        public List<Path> getBuilderJVMCIClasspath() {
-            List<Path> answer = new LinkedList<>();
-            if (! useJavaModules()) {
-                answer.add(getJVMCILibraryRoot().resolve("jvmci-api.jar"));
-                answer.add(getJVMCILibraryRoot().resolve("jvmci-hotspot.jar"));
-            }
-            answer.add(Paths.get(OMEGADEPSROOT, "compiler.jar"));
-            return answer;
-        }
-
-        @Override
-        public List<Path> getBuilderJVMCIClasspathAppend() {
-            List<Path> answer = new LinkedList<>();
-            answer.add(Paths.get(OMEGADEPSROOT, "compiler.jar"));
-            return answer;
-        }
-
-        @Override
-        public List<Path> getBuilderBootClasspath() {
-            List<Path> answer = new LinkedList<>();
-            try {
-                List<Path> javafxJars = USE_JAVAFX ? Files.walk(Paths.get(JFXSDK + "/lib"))
-                        .filter(p -> p.endsWith(".jar"))
-                        .collect(Collectors.toList()) : new ArrayList<>();
-                answer.addAll(javafxJars);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            answer.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
-            return answer;
-        }
-
-        @Override
-        public List<Path> getBuilderModulePath() {
-            List<Path> paths = new ArrayList<>();
-            paths.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
-            paths.add(Paths.get(OMEGADEPSROOT,"truffle-api.jar"));
-            return paths;
-        }
-
-        @Override
-        public List<Path> getBuilderUpgradeModulePath() {
-            return Arrays.asList(Paths.get(OMEGADEPSROOT,"compiler.jar"));
-        }
-
-        @Override
-        public List<Path> getImageClasspath() {
-            return classDir;
-        }
-
-        @Override
-        public List<String> getBuildArgs() {
-            List<String> list = new LinkedList<>(config.getAdditionalBuildArgs());
-            list.add("-H:Class=" + mainClass);
-            list.add("-H:Name=" + appName);
-            list.add("-H:JNIConfigurationFiles=jniconfig.json");
-            list.add("-H:IncludeResources=.*/.*frag$");
-            list.add("-H:ReflectionConfigurationFiles=reflectionconfig.json");
-            if (this.cross || Omega.macHost) {
-                list.add("-H:Kind=SHARED_LIBRARY");
-            }
-            if (USE_JAVAFX) {
-                delayClinitList.stream().map(clinit -> "-H:DelayClassInitialization=" + clinit).forEach(list::add);
-            }
-            config.getRerunClinitList().stream().map(clinit -> "-H:RerunClassInitialization=" + clinit).forEach(list::add);
-            list.add("-H:+ReportUnsupportedElementsAtRuntime");
-            list.add("-H:TempDirectory="+workDir.toAbsolutePath()+"/tmp");
-            return list;
-        }
-
-    }
-
-    public static String uniqueShortNameForMain(String className) {
-        StringBuilder fullName = new StringBuilder();
-        fullName.append(className);
-        fullName.append(".main([Ljava.lang.String;,)void");
-
-        String qualifiedClassName = "main" + "_" +
-                "main" + "_" +
-                SubstrateUtil.digest(fullName.toString());
-        return qualifiedClassName.substring(qualifiedClassName.lastIndexOf(".") + 1);
     }
 
     static boolean deleteDirectory(File directoryToBeDeleted) {
