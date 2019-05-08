@@ -185,6 +185,9 @@ public class SVMBridge {
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
         } else if (Omega.linux) {
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
+        } else if (configuration.isCrossCompile()) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
+            linkedList.add("-Dsvm.targetArch=arm");
         } else {
             // TODO: Set platform for iOS, sim
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_ARM64");
@@ -347,7 +350,7 @@ public class SVMBridge {
             e.printStackTrace();
         }
         String hostedNative = Omega.macHost ?
-                "darwin-amd64" :
+                (config.isCrossCompile() ? "darwin-arm64" : "darwin-amd64") :
                 "linux-amd64";
 
         runtimeArgs = new ArrayList<>(Arrays.asList(
@@ -374,7 +377,6 @@ public class SVMBridge {
 
         runtimeArgs.addAll(getResources());
         runtimeArgs.addAll(Arrays.asList(
-                "-H:NumberOfThreads=1",
                 "-H:Name=" + appName,
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+AddAllCharsets",
@@ -383,7 +385,7 @@ public class SVMBridge {
 
         if (USE_LLVM) {
             runtimeArgs.add("-H:CompilerBackend=llvm");
-            runtimeArgs.add("-H:-MultiThreaded");
+            runtimeArgs.add("-H:-AOTInline");
             runtimeArgs.add("-H:-SpawnIsolates");
         }
     }
