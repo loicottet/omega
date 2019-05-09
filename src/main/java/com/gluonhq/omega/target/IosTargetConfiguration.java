@@ -284,7 +284,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         ProcessBuilder linkBuilder = new ProcessBuilder("clang");
         linkBuilder.command().add("-w");
         linkBuilder.command().add("-o");
-        linkBuilder.command().add(appPath.toString() + "/" + appName); //  + "App"
+        linkBuilder.command().add(appPath.toString() + "/" + appName + "App");
         linkBuilder.command().add("-Wl,-no_implicit_dylibs");
         linkBuilder.command().add("-Wl,-dead_strip");
         linkBuilder.command().add("-fPIC");
@@ -314,7 +314,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
-        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/darwin-amd64");
+        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + (isSimulator() ? "darwin-amd64" : "darwin-arm64"));
         linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
         if (USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
@@ -513,7 +513,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     className = className.substring(className.indexOf("/") + 1);
                 }
                 dict.put("CFBundleIdentifier", className);
-                dict.put("CFBundleExecutable", Omega.getConfig().getAppName()); // + "App"
+                dict.put("CFBundleExecutable", Omega.getConfig().getAppName() + "App");
                 dict.put("CFBundleName", Omega.getConfig().getAppName());
                 dict.saveAsXML(plist);
             }
