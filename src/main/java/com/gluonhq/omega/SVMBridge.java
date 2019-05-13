@@ -67,34 +67,6 @@ public class SVMBridge {
     private static String mainClass;
     private static String appName;
 
-    private static final List<String> delayClinitList = Arrays.asList(
-            "javafx.scene.CssStyleHelper",
-            "com.sun.prism.es2.ES2VramPool",
-            "com.sun.prism.es2.ES2Pipeline",
-            "com.sun.javafx.iio.jpeg.JPEGImageLoader",
-            "com.sun.javafx.tk.quantum.ViewPainter",
-            "com.sun.javafx.tk.quantum.PresentingPainter",
-            "com.sun.javafx.tk.quantum.PrismImageLoader2",
-            "com.sun.javafx.tk.quantum.PrismImageLoader2$AsyncImageLoader",
-            "com.sun.javafx.tk.quantum.UploadingPainter",
-            "com.sun.javafx.scene.control.LabeledText",
-            "com.sun.prism.impl.ps.BaseShaderContext",
-            "com.sun.prism.impl.ps.PaintHelper",
-            "com.sun.prism.PresentableState",
-            "javafx.scene.control.Labeled$StyleableProperties",
-            "javafx.scene.control.TextInputControl$StyleableProperties",
-            "javafx.scene.control.TextArea$StyleableProperties",
-            "javafx.scene.control.TextField$StyleableProperties",
-            "javafx.scene.control.PopupControl",
-            "javafx.scene.control.skin.TextInputControlSkin",
-            "javafx.scene.text.Text$StyleableProperties",
-            "com.sun.javafx.scene.control.Properties",
-            "com.sun.javafx.scene.control.behavior.TextFieldBehavior",
-            "com.sun.javafx.scene.control.behavior.TextAreaBehavior",
-            "com.sun.javafx.scene.control.behavior.TextInputControlBehavior",
-            "com.sun.javafx.scene.control.skin.FXVK"
-    );
-
     private static final List<String> bundlesList = new ArrayList<>(Arrays.asList(
             "com/sun/javafx/scene/control/skin/resources/controls",
             "com.sun.javafx.tk.quantum.QuantumMessagesBundle"
@@ -112,6 +84,42 @@ public class SVMBridge {
         SVMBridge.CUSTOM_JNI_LIST.addAll(omegaConfig.getJniList());
         SVMBridge.CUSTOM_DELAY_INIT_LIST.addAll(omegaConfig.getDelayInitList());
 
+        // TODO: add iOS
+        String hostedNative = Omega.macHost ? "darwin-amd64" : "linux-amd64";
+
+        // merge Java and JavaFX static libraries with Graal's
+        Path staticlibs = Path.of(OMEGADEPSROOT, hostedNative);
+
+        try {
+            Files.walk(Path.of(Omega.getConfig().getStaticRoot()))
+                    .filter(s -> s.toString().endsWith(".a"))
+                    .forEach(f -> {
+                        try {
+                            Path lib = staticlibs.resolve(f.getFileName());
+                            if (! Files.exists(lib)) {
+                                Files.copy(f, lib);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+            if (USE_JAVAFX) {
+                Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
+                        .filter(s -> s.toString().endsWith(".a"))
+                        .forEach(f -> {
+                            try {
+                                Path lib = staticlibs.resolve(f.getFileName());
+                                if (! Files.exists(lib)) {
+                                    Files.copy(f, lib);
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error copying static libraries");
+        }
     }
 
     public static void compile(Path workingDir, List<Path> gClassdir, String className, String appName,
@@ -141,6 +149,9 @@ public class SVMBridge {
                 config instanceof MacosTargetConfiguration ? "mac" : "ios";
         createReflectionConfig(suffix);
         createJNIConfig(suffix);
+
+        // TODO: include symbols from project, like _Java_com_gluonhq*
+        createReleaseSymbols();
 
         setClassPath();
         setModulePath();
@@ -173,8 +184,14 @@ public class SVMBridge {
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalVersion());
-        if (configuration.isCrossCompile()) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
+
+        if (Omega.macHost) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
+        } else if (Omega.linux) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
+        } else {
+            // TODO: Set platform for iOS, sim
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_ARM64");
         }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
@@ -186,8 +203,6 @@ public class SVMBridge {
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.amd64=ALL-UNNAMED");
-        linkedList.add("--add-exports");
-        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.aarch64=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED");
         linkedList.add("--add-exports");
@@ -312,10 +327,20 @@ public class SVMBridge {
                 .map(Path::toString)
                 .filter(s -> !s.contains("javafx-"))
                 .collect(Collectors.joining(File.pathSeparator));
+        String fx = classDir.stream()
+                .filter(p -> p.toString().contains("javafx-"))
+                .map(p -> p.getFileName().toString())
+                .collect(Collectors.joining(File.pathSeparator));
         try {
             String javafxJars = USE_JAVAFX ? Files.walk(Paths.get(JFXSDK + "/lib"))
+                    .filter(p -> p.toString().endsWith(".jar"))
+                    .filter(p -> {
+                        String jarName = p.getFileName().toString()
+                                .replace(".jar", "")
+                                .replace(".", "-");
+                        return fx.contains(jarName);
+                    })
                     .map(Path::toString)
-                    .filter(p -> p.endsWith(".jar"))
                     .collect(Collectors.joining(File.pathSeparator)) : "";
             cp = cp + File.pathSeparator + javafxJars;
         } catch (IOException e) {
@@ -343,13 +368,7 @@ public class SVMBridge {
             runtimeArgs.add("-H:Kind=SHARED_LIBRARY");
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
-        if (USE_JAVAFX) {
-//            delayClinitList.forEach(clinit -> runtimeArgs.add("-H:DelayClassInitialization=" + clinit));
-        }
         CUSTOM_DELAY_INIT_LIST.forEach(clinit -> runtimeArgs.add("-H:DelayClassInitialization=" + clinit));
-        if (USE_JAVAFX) {
-//            config.getRerunClinitList().forEach(clinit -> runtimeArgs.add("-H:RerunClassInitialization=" + clinit));
-        }
         runtimeArgs.addAll(Arrays.asList(
                 "-H:NumberOfThreads=1",
                 "-H:Name=" + appName,
@@ -364,8 +383,11 @@ public class SVMBridge {
                 "-H:IncludeResources=.*css$",
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+AllowIncompleteClasspath",
-                "-H:EnableURLProtocols=http,https",
-                "-H:+EnableAllSecurityServices"));
+                "-H:+PrintClassInitialization",
+                "-H:+PrintAnalysisCallTree"));
+        // TODO: Enable URL:
+//                "-H:EnableURLProtocols=http,https",
+//                "-H:+EnableAllSecurityServices"
         if (USE_LLVM) {
             runtimeArgs.add("-H:CompilerBackend=llvm");
             runtimeArgs.add("-H:-MultiThreaded");
@@ -420,6 +442,19 @@ public class SVMBridge {
         }
     }
 
+    private static void createReleaseSymbols() throws Exception {
+        Path releaseSymbols = workDir.resolve("release.symbols");
+        File f = releaseSymbols.toFile();
+        if (f.exists()) {
+            f.delete();
+        }
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
+            for (String release : config.getReleaseSymbolsList()) {
+                bw.write(release.concat("\n"));
+            }
+        }
+    }
+
     private static void writeEntry(BufferedWriter bw, String javafxClass) throws Exception {
         bw.write(",\n");
         writeSingleEntry(bw, javafxClass);
@@ -427,13 +462,19 @@ public class SVMBridge {
 
     private static void writeSingleEntry (BufferedWriter bw, String javafxClass) throws Exception {
         bw.write("  {\n");
-        bw.write("    \"name\" : \""+javafxClass+"\",\n");
-        bw.write("    \"allDeclaredConstructors\" : true,\n");
-        bw.write("    \"allPublicConstructors\" : true,\n");
-        bw.write("    \"allDeclaredFields\" : true,\n");
-        bw.write("    \"allPublicFields\" : true,\n");
-        bw.write("    \"allDeclaredMethods\" : true,\n");
-        bw.write("    \"allPublicMethods\" : true\n");
+        bw.write("    \"name\" : \"" + javafxClass + "\"");
+        // TODO: create list of exclusions
+        if (! javafxClass.equals("java.lang.Thread")) {
+            bw.write(",\n");
+            bw.write("    \"allDeclaredConstructors\" : true,\n");
+            bw.write("    \"allPublicConstructors\" : true,\n");
+            bw.write("    \"allDeclaredFields\" : true,\n");
+            bw.write("    \"allPublicFields\" : true,\n");
+            bw.write("    \"allDeclaredMethods\" : true,\n");
+            bw.write("    \"allPublicMethods\" : true\n");
+        } else {
+            bw.write("\n");
+        }
         bw.write("  }\n");
     }
 

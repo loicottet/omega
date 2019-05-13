@@ -145,14 +145,6 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
-    public List<String> getRerunClinitList() {
-        ArrayList<String> answer = new ArrayList<>();
-        answer.addAll(super.getRerunClinitList());
-        answer.addAll(rerunIosClinitList);
-        return answer;
-    }
-
-    @Override
     public void compileApplication(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
         super.compileApplication(gvmPath, classPath, mainClassName, appName, target);
         setupArch(target);
@@ -231,7 +223,8 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         }
 
         System.err.println("Linking at " + workDir.toString());
-        Path omegaPath = workDir.getParent().getParent();
+        Path gvmPath = workDir.getParent();
+        Path omegaPath = gvmPath.getParent();
         appPath = omegaPath.resolve("ios").resolve(appName + ".app");
         Files.createDirectories(appPath);
         libPath = omegaPath.resolve("gvm").resolve("lib");
@@ -250,8 +243,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add(arch);
         linkBuilder.command().add("-mios-version-min=11.0");
 
-        // TODO: include symbols from project, like _Java_com_gluonhq*
-        linkBuilder.command().add("-Wl,-exported_symbols_list," + appPath.toString() + "/release.symbols");
+        linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
 
         if (USE_JAVAFX) {
             javafxLibs.forEach(name ->
@@ -271,6 +263,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             linkBuilder.command().add(o2.toString());
         }
         linkBuilder.command().add("-L" + SVMBridge.OMEGADEPSROOT + "/darwin-amd64");
+        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
         linkBuilder.command().addAll(ioslibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);

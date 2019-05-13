@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
+
 public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     private static final List<String>javafxJNIMacClassList = Arrays.asList(
@@ -59,17 +61,205 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     private static final List<String> javafxReflectionMacClassList = Arrays.asList(
             "com.sun.prism.es2.MacGLFactory",
-            "com.sun.javafx.font.coretext.CTFactory",
             "com.sun.scenario.effect.impl.es2.ES2ShaderSource",
             "com.sun.glass.ui.mac.MacApplication",
+            "com.sun.glass.ui.mac.MacView",
             "com.sun.glass.ui.mac.MacPlatformFactory",
-            "com.sun.glass.ui.mac.MacGestureSupport"
+            "com.sun.glass.ui.mac.MacGestureSupport",
+            "com.sun.glass.ui.mac.MacMenuBarDelegate"
+    );
+
+    private static final List<String> releaseSymbolsMacList = Arrays.asList(
+            "_Java_com_sun_glass_ui_mac_MacApplication__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1runLoop",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1enterNestedEventLoopImpl",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1finishTerminating",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1getDataDirectory",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1getMacKey",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1getRemoteLayerServerName",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1hide",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1hideOtherApplications",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1invokeAndWait",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1leaveNestedEventLoopImpl",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1runLoop",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1submitForLaterInvocation",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1supportsSystemMenu",
+            "_Java_com_sun_glass_ui_mac_MacApplication__1unhideAllApplications",
+            "_Java_com_sun_glass_ui_mac_MacApplication_staticScreen_1getScreens",
+            "_Java_com_sun_glass_ui_mac_MacApplication_staticScreen_1getVideoRefreshPeriod",
+            "_Java_com_sun_glass_ui_mac_MacCursor__1createCursor",
+            "_Java_com_sun_glass_ui_mac_MacCursor__1getBestSize",
+            "_Java_com_sun_glass_ui_mac_MacCursor__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacCursor__1set",
+            "_Java_com_sun_glass_ui_mac_MacCursor__1setCustom",
+            "_Java_com_sun_glass_ui_mac_MacCursor__1setVisible",
+            "_Java_com_sun_glass_ui_mac_MacGestureSupport__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacPixels__1attachByte",
+            "_Java_com_sun_glass_ui_mac_MacPixels__1attachInt",
+            "_Java_com_sun_glass_ui_mac_MacPixels__1copyPixels",
+            "_Java_com_sun_glass_ui_mac_MacPixels__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1getMaxPeriod",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1getMinPeriod",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1pause",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1resume",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1start__Ljava_lang_Runnable_2",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1start__Ljava_lang_Runnable_2I",
+            "_Java_com_sun_glass_ui_mac_MacTimer__1stop",
+            "_Java_com_sun_glass_ui_mac_MacView__1begin",
+            "_Java_com_sun_glass_ui_mac_MacView__1close",
+            "_Java_com_sun_glass_ui_mac_MacView__1create",
+            "_Java_com_sun_glass_ui_mac_MacView__1enableInputMethodEvents",
+            "_Java_com_sun_glass_ui_mac_MacView__1end",
+            "_Java_com_sun_glass_ui_mac_MacView__1enterFullscreen",
+            "_Java_com_sun_glass_ui_mac_MacView__1exitFullscreen",
+            "_Java_com_sun_glass_ui_mac_MacView__1getMultiClickMaxX_1impl",
+            "_Java_com_sun_glass_ui_mac_MacView__1getMultiClickMaxY_1impl",
+            "_Java_com_sun_glass_ui_mac_MacView__1getMultiClickTime_1impl",
+            "_Java_com_sun_glass_ui_mac_MacView__1getNativeFrameBuffer",
+            "_Java_com_sun_glass_ui_mac_MacView__1getNativeLayer",
+            "_Java_com_sun_glass_ui_mac_MacView__1getNativeRemoteLayerId",
+            "_Java_com_sun_glass_ui_mac_MacView__1getX",
+            "_Java_com_sun_glass_ui_mac_MacView__1getY",
+            "_Java_com_sun_glass_ui_mac_MacView__1hostRemoteLayerId",
+            "_Java_com_sun_glass_ui_mac_MacView__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacView__1scheduleRepaint",
+            "_Java_com_sun_glass_ui_mac_MacView__1setParent",
+            "_Java_com_sun_glass_ui_mac_MacView__1uploadPixelsByteArray",
+            "_Java_com_sun_glass_ui_mac_MacView__1uploadPixelsDirect",
+            "_Java_com_sun_glass_ui_mac_MacView__1uploadPixelsIntArray",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1close",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1createChildWindow",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1createWindow",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1enterModal",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1enterModalWithWindow",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1exitModal",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1getEmbeddedX",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1getEmbeddedY",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1grabFocus",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1maximize",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1minimize",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1requestFocus",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setAlpha",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setBackground",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setBounds2",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setEnabled",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setFocusable",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setIcon",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setLevel",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setMaximumSize",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setMenubar",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setMinimumSize",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setResizable",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setTitle",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setView",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1setVisible",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1toBack",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1toFront",
+            "_Java_com_sun_glass_ui_mac_MacWindow__1ungrabFocus",
+            "_Java_com_sun_prism_es2_GLFactory_nGetGLRenderer",
+            "_Java_com_sun_prism_es2_GLFactory_nGetGLVendor",
+            "_Java_com_sun_prism_es2_GLFactory_nGetGLVersion",
+            "_Java_com_sun_prism_es2_GLFactory_nIsGLExtensionSupported",
+            "_Java_com_sun_prism_es2_MacGLFactory_nGetAdapterCount",
+            "_Java_com_sun_prism_es2_MacGLFactory_nGetAdapterOrdinal",
+            "_Java_com_sun_prism_es2_MacGLFactory_nGetIsGL2",
+            "_Java_com_sun_prism_es2_MacGLFactory_nInitialize",
+            "_Java_com_sun_prism_es2_MacGLPixelFormat_nCreatePixelFormat",
+            "_Java_com_sun_prism_es2_MacGLDrawable_nCreateDrawable",
+            "_Java_com_sun_prism_es2_MacGLDrawable_nGetDummyDrawable",
+            "_Java_com_sun_prism_es2_MacGLDrawable_nSwapBuffers",
+            "_Java_com_sun_prism_es2_MacGLContext_nGetNativeHandle",
+            "_Java_com_sun_prism_es2_MacGLContext_nInitialize",
+            "_Java_com_sun_prism_es2_MacGLContext_nMakeCurrent",
+            "_Java_com_sun_prism_es2_GLContext_nActiveTexture",
+            "_Java_com_sun_prism_es2_GLContext_nBindFBO",
+            "_Java_com_sun_prism_es2_GLContext_nBindTexture",
+            "_Java_com_sun_prism_es2_GLContext_nBlendFunc",
+            "_Java_com_sun_prism_es2_GLContext_nBlit",
+            "_Java_com_sun_prism_es2_GLContext_nBuildNativeGeometryInt",
+            "_Java_com_sun_prism_es2_GLContext_nBuildNativeGeometryShort",
+            "_Java_com_sun_prism_es2_GLContext_nClearBuffers",
+            "_Java_com_sun_prism_es2_GLContext_nCompileShader",
+            "_Java_com_sun_prism_es2_GLContext_nCreateDepthBuffer",
+            "_Java_com_sun_prism_es2_GLContext_nCreateES2Mesh",
+            "_Java_com_sun_prism_es2_GLContext_nCreateES2MeshView",
+            "_Java_com_sun_prism_es2_GLContext_nCreateES2PhongMaterial",
+            "_Java_com_sun_prism_es2_GLContext_nCreateFBO",
+            "_Java_com_sun_prism_es2_GLContext_nCreateIndexBuffer16",
+            "_Java_com_sun_prism_es2_GLContext_nCreateProgram",
+            "_Java_com_sun_prism_es2_GLContext_nCreateRenderBuffer",
+            "_Java_com_sun_prism_es2_GLContext_nCreateTexture",
+            "_Java_com_sun_prism_es2_GLContext_nDeleteFBO",
+            "_Java_com_sun_prism_es2_GLContext_nDeleteRenderBuffer",
+            "_Java_com_sun_prism_es2_GLContext_nDeleteShader",
+            "_Java_com_sun_prism_es2_GLContext_nDeleteTexture",
+            "_Java_com_sun_prism_es2_GLContext_nDisableVertexAttributes",
+            "_Java_com_sun_prism_es2_GLContext_nDisposeShaders",
+            "_Java_com_sun_prism_es2_GLContext_nDrawIndexedQuads",
+            "_Java_com_sun_prism_es2_GLContext_nEnableVertexAttributes",
+            "_Java_com_sun_prism_es2_GLContext_nFinish",
+            "_Java_com_sun_prism_es2_GLContext_nGenAndBindTexture",
+            "_Java_com_sun_prism_es2_GLContext_nGetFBO",
+            "_Java_com_sun_prism_es2_GLContext_nGetIntParam",
+            "_Java_com_sun_prism_es2_GLContext_nGetMaxSampleSize",
+            "_Java_com_sun_prism_es2_GLContext_nGetUniformLocation",
+            "_Java_com_sun_prism_es2_GLContext_nPixelStorei",
+            "_Java_com_sun_prism_es2_GLContext_nReadPixelsByte",
+            "_Java_com_sun_prism_es2_GLContext_nReadPixelsInt",
+            "_Java_com_sun_prism_es2_GLContext_nReleaseES2Mesh",
+            "_Java_com_sun_prism_es2_GLContext_nReleaseES2MeshView",
+            "_Java_com_sun_prism_es2_GLContext_nReleaseES2PhongMaterial",
+            "_Java_com_sun_prism_es2_GLContext_nRenderMeshView",
+            "_Java_com_sun_prism_es2_GLContext_nScissorTest",
+            "_Java_com_sun_prism_es2_GLContext_nSetAmbientLight",
+            "_Java_com_sun_prism_es2_GLContext_nSetCullingMode",
+            "_Java_com_sun_prism_es2_GLContext_nSetDepthTest",
+            "_Java_com_sun_prism_es2_GLContext_nSetDeviceParametersFor2D",
+            "_Java_com_sun_prism_es2_GLContext_nSetDeviceParametersFor3D",
+            "_Java_com_sun_prism_es2_GLContext_nSetIndexBuffer",
+            "_Java_com_sun_prism_es2_GLContext_nSetMSAA",
+            "_Java_com_sun_prism_es2_GLContext_nSetMap",
+            "_Java_com_sun_prism_es2_GLContext_nSetMaterial",
+            "_Java_com_sun_prism_es2_GLContext_nSetPointLight",
+            "_Java_com_sun_prism_es2_GLContext_nSetSolidColor",
+            "_Java_com_sun_prism_es2_GLContext_nSetWireframe",
+            "_Java_com_sun_prism_es2_GLContext_nTexImage2D0",
+            "_Java_com_sun_prism_es2_GLContext_nTexImage2D1",
+            "_Java_com_sun_prism_es2_GLContext_nTexParamsMinMax",
+            "_Java_com_sun_prism_es2_GLContext_nTexSubImage2D0",
+            "_Java_com_sun_prism_es2_GLContext_nTexSubImage2D1",
+            "_Java_com_sun_prism_es2_GLContext_nUniform1f",
+            "_Java_com_sun_prism_es2_GLContext_nUniform1i",
+            "_Java_com_sun_prism_es2_GLContext_nUniform2f",
+            "_Java_com_sun_prism_es2_GLContext_nUniform2i",
+            "_Java_com_sun_prism_es2_GLContext_nUniform3f",
+            "_Java_com_sun_prism_es2_GLContext_nUniform3i",
+            "_Java_com_sun_prism_es2_GLContext_nUniform4f",
+            "_Java_com_sun_prism_es2_GLContext_nUniform4fv0",
+            "_Java_com_sun_prism_es2_GLContext_nUniform4fv1",
+            "_Java_com_sun_prism_es2_GLContext_nUniform4i",
+            "_Java_com_sun_prism_es2_GLContext_nUniform4iv0",
+            "_Java_com_sun_prism_es2_GLContext_nUniform4iv1",
+            "_Java_com_sun_prism_es2_GLContext_nUniformMatrix4fv",
+            "_Java_com_sun_prism_es2_GLContext_nUpdateFilterState",
+            "_Java_com_sun_prism_es2_GLContext_nUpdateViewport",
+            "_Java_com_sun_prism_es2_GLContext_nUpdateWrapState",
+            "_Java_com_sun_prism_es2_GLContext_nUseProgram",
+            "_Java_com_sun_javafx_font_MacFontFinder_getSystemFontSize",
+            "_Java_com_sun_javafx_font_MacFontFinder_getFont",
+            "_Java_com_sun_javafx_font_MacFontFinder_getFontData",
+            "_Java_com_sun_javafx_font_MacFontFinder_getSystemFontSize"
     );
 
     private static final List<String> macoslibs = Arrays.asList("-lffi",
-            "-Wl,-framework,CoreFoundation", "-Wl,-framework,AppKit",
-            "-lpthread","-lz", "-ldl", "-lstrictmath",
-            "-llibchelper");
+            "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper",
+            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc",
+            "-Wl,-framework,Foundation", "-Wl,-framework,AppKit",
+            "-Wl,-framework,ApplicationServices", "-Wl,-framework,OpenGL",
+            "-Wl,-framework,QuartzCore", "-Wl,-framework,Security");
 
     @Override
     public List<String> getJavaFXJNIClassList() {
@@ -88,6 +278,14 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
+    public List<String> getReleaseSymbolsList() {
+        ArrayList<String> answer = new ArrayList<>();
+        answer.addAll(super.getReleaseSymbolsList());
+        answer.addAll(releaseSymbolsMacList);
+        return answer;
+    }
+
+    @Override
     public void compileApplication(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
         super.compileApplication(gvmPath, classPath, mainClassName, appName, target);
         logDebug("Compiling MacOS application");
@@ -96,16 +294,6 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
-                .filter(s -> s.toString().endsWith(".dylib"))
-                .forEach(f -> {
-                    try {
-                        Files.copy(f, gvmPath.resolve(f.getFileName()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
         Path workDir = this.gvmPath.getParent().resolve("mac").resolve(appName);
         Files.createDirectories(workDir);
         logDebug("Compiling additional sources to " + workDir);
@@ -145,13 +333,18 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         }
 
         logDebug("Linking at " + workDir.toString());
+        Path gvmPath = workDir.getParent();
         Path mac = workDir.getParent().getParent().resolve("mac").resolve(appName);
-        ProcessBuilder linkBuilder = new ProcessBuilder("clang");
+        ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
+        linkBuilder.command().add("-ObjC");
         linkBuilder.command().add("-isysroot");
         linkBuilder.command().add(SdkDirType.MACOSX.getSDKPath());
-        linkBuilder.command().add("-fobjc-arc");
+        linkBuilder.command().add("-iframework" + SdkDirType.MACOSX.getSDKPath() + "/System/Library/Frameworks");
+        linkBuilder.command().add("-arch");
+        linkBuilder.command().add("x86_64");
         linkBuilder.command().add("-o");
         linkBuilder.command().add(mac.toString() + "/" + appName);
+        linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
         linkBuilder.command().add(mac.toString() + "/AppDelegate.o");
         linkBuilder.command().add(mac.toString() + "/launcher.o");
 
@@ -160,7 +353,9 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
+
         linkBuilder.command().add("-L" + SVMBridge.OMEGADEPSROOT + "/darwin-amd64");
+        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
         linkBuilder.command().addAll(macoslibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);

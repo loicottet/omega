@@ -54,6 +54,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
     private static final List<String> javaJNIClassList = Arrays.asList(
             "java.io.File",
             "java.lang.Boolean",
+            "java.lang.Class",
             "java.lang.Integer",
             "java.lang.Iterable",
             "java.lang.Long",
@@ -61,6 +62,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "java.lang.String",
             "java.lang.Thread",
             "java.nio.ByteBuffer",
+            "java.nio.charset.Charset",
             "java.util.ArrayList",
             "java.util.HashMap",
             "java.util.HashSet",
@@ -81,6 +83,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.javafx.geom.Path2D");
 
     private static final List<String> javafxReflectionClassList = new ArrayList<>(Arrays.asList(
+            "java.lang.Runnable",
             "javafx.scene.control.Control",
             "javafx.scene.layout.Pane",
             "javafx.scene.layout.Region",
@@ -212,14 +215,72 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.scenario.effect.impl.prism.ps.PPSLinearConvolveShadowPeer",
             "com.sun.scenario.effect.impl.prism.ps.PPSLinearConvolvePeer",
             "com.sun.scenario.effect.impl.prism.ps.PPSBlend_SRC_INPeer",
-            "com.sun.xml.internal.stream.XMLInputFactoryImpl"
+            "com.sun.xml.internal.stream.XMLInputFactoryImpl",
+            "com.sun.glass.ui.Application",
+            "com.sun.glass.ui.View",
+            "com.sun.glass.ui.Size",
+            "com.sun.javafx.font.coretext.CTFactory"
     ));
 
-    private static final List<String> rerunClinitList = Arrays.asList(
-            "com.sun.javafx.PlatformUtil",
-            "com.sun.prism.es2.GLFactory",
-            "com.sun.javafx.font.PrismFontFactory",
-            "com.sun.javafx.font.PrismFontLoader"
+    private static final List<String> releaseSymbolsList = Arrays.asList(
+            "_Java_java_io_UnixFileSystem_canonicalize0",
+            "_Java_jdk_internal_misc_VM_getNanoTimeAdjustment",
+            "_JNI_OnLoad_glass",
+            "_JNI_OnLoad_prism_es2",
+            "_JNI_OnLoad_javafx_font",
+            "_Java_com_sun_javafx_font_coretext_OS_CFArrayGetCount",
+            "_Java_com_sun_javafx_font_coretext_OS_CFArrayGetValueAtIndex",
+            "_Java_com_sun_javafx_font_coretext_OS_CFAttributedStringCreate",
+            "_Java_com_sun_javafx_font_coretext_OS_CFDictionaryAddValue",
+            "_Java_com_sun_javafx_font_coretext_OS_CFDictionaryCreateMutable",
+            "_Java_com_sun_javafx_font_coretext_OS_CFDictionaryGetValue",
+            "_Java_com_sun_javafx_font_coretext_OS_CFRelease",
+            "_Java_com_sun_javafx_font_coretext_OS_CFStringCreateWithCharacters__J_3CJ",
+            "_Java_com_sun_javafx_font_coretext_OS_CFStringCreateWithCharacters__J_3CJJ",
+            "_Java_com_sun_javafx_font_coretext_OS_CFURLCreateWithFileSystemPath",
+            "_Java_com_sun_javafx_font_coretext_OS_CGBitmapContextCreate",
+            "_Java_com_sun_javafx_font_coretext_OS_CGBitmapContextGetData",
+            "_Java_com_sun_javafx_font_coretext_OS_CGColorSpaceCreateDeviceGray",
+            "_Java_com_sun_javafx_font_coretext_OS_CGColorSpaceCreateDeviceRGB",
+            "_Java_com_sun_javafx_font_coretext_OS_CGColorSpaceRelease",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextFillRect",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextRelease",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextSetAllowsAntialiasing",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextSetAllowsFontSmoothing",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextSetAllowsFontSubpixelPositioning",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextSetAllowsFontSubpixelQuantization",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextSetRGBFillColor",
+            "_Java_com_sun_javafx_font_coretext_OS_CGContextTranslateCTM",
+            "_Java_com_sun_javafx_font_coretext_OS_CGDataProviderCreateWithURL",
+            "_Java_com_sun_javafx_font_coretext_OS_CGFontCreateWithDataProvider",
+            "_Java_com_sun_javafx_font_coretext_OS_CGPathApply",
+            "_Java_com_sun_javafx_font_coretext_OS_CGPathGetPathBoundingBox",
+            "_Java_com_sun_javafx_font_coretext_OS_CGPathRelease",
+            "_Java_com_sun_javafx_font_coretext_OS_CGRectApplyAffineTransform",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontCopyAttributeDisplayName",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontCreatePathForGlyph",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontCreateWithGraphicsFont",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontCreateWithName",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontDrawGlyphs",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontGetAdvancesForGlyphs",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontGetBoundingRectForGlyphUsingTables",
+            "_Java_com_sun_javafx_font_coretext_OS_CTFontManagerRegisterFontsForURL",
+            "_Java_com_sun_javafx_font_coretext_OS_CTLineCreateWithAttributedString",
+            "_Java_com_sun_javafx_font_coretext_OS_CTLineGetGlyphCount",
+            "_Java_com_sun_javafx_font_coretext_OS_CTLineGetGlyphRuns",
+            "_Java_com_sun_javafx_font_coretext_OS_CTLineGetTypographicBounds",
+            "_Java_com_sun_javafx_font_coretext_OS_CTParagraphStyleCreate",
+            "_Java_com_sun_javafx_font_coretext_OS_CTRunGetAttributes",
+            "_Java_com_sun_javafx_font_coretext_OS_CTRunGetGlyphCount",
+            "_Java_com_sun_javafx_font_coretext_OS_CTRunGetGlyphs",
+            "_Java_com_sun_javafx_font_coretext_OS_CTRunGetPositions",
+            "_Java_com_sun_javafx_font_coretext_OS_CTRunGetStringIndices",
+            "_Java_com_sun_javafx_font_coretext_OS_kCFAllocatorDefault",
+            "_Java_com_sun_javafx_font_coretext_OS_kCFTypeDictionaryKeyCallBacks",
+            "_Java_com_sun_javafx_font_coretext_OS_kCFTypeDictionaryValueCallBacks",
+            "_Java_com_sun_javafx_font_coretext_OS_kCTFontAttributeName",
+            "_Java_com_sun_javafx_font_coretext_OS_kCTParagraphStyleAttributeName",
+            "_strJavaToC"
     );
 
     public List<String> getJavaJNIClassList() {
@@ -234,8 +295,8 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
         return javafxReflectionClassList;
     }
 
-    public List<String> getRerunClinitList() {
-        return rerunClinitList;
+    public List<String> getReleaseSymbolsList() {
+        return releaseSymbolsList;
     }
 
     public List<String> getAdditionalBuildArgs() {

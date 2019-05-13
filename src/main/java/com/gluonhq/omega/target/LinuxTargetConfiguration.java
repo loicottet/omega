@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
+
 public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     private static final List<String>javafxJNILinuxClassList = Arrays.asList(
@@ -63,8 +65,8 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     );
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
-            "-lpthread","-lz", "-ldl", "-lstrictmath",
-            "-llibchelper", "-lm");
+            "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
+            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio", "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm");
 
     @Override
     public List<String> getJavaFXJNIClassList() {
@@ -82,14 +84,6 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         return answer;
     }
 
-    @Override
-    public List<String> getRerunClinitList() {
-        ArrayList<String> answer = new ArrayList<>();
-        answer.addAll(super.getRerunClinitList());
-        answer.addAll(rerunLinuxClinitList);
-        return answer;
-    }
-
     public void compileApplication(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
         super.compileApplication(gvmPath, classPath, mainClassName, appName, target);
         System.err.println("Compiling application for Linux");
@@ -98,15 +92,17 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
-                .filter(s -> s.toString().endsWith(".so"))
-                .forEach(f -> {
-                    try {
-                        Files.copy(f, gvmPath.resolve(f.getFileName()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+        if (USE_JAVAFX) {
+            Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
+                    .filter(s -> s.toString().endsWith(".so"))
+                    .forEach(f -> {
+                        try {
+                            Files.copy(f, gvmPath.resolve(f.getFileName()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+        }
 
         Path workDir = this.gvmPath.getParent().resolve("linux").resolve(appName);
         System.err.println("Compiling additional sources to " + workDir);
@@ -142,10 +138,12 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         }
 
         System.err.println("Linking at " + workDir.toString());
-        Path linux = workDir.getParent().getParent().resolve("linux").resolve(appName);
+        Path gvmPath = workDir.getParent();
+        Path linux = gvmPath.getParent().resolve("linux").resolve(appName);
 
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
         linkBuilder.command().add("-o");
+        linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
         linkBuilder.command().add(linux.toString() + "/" + appName);
         linkBuilder.command().add(linux.toString() + "/launcher.o");
         linkBuilder.command().add(o.toString());
@@ -153,7 +151,9 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
+
         linkBuilder.command().add("-L"+SVMBridge.OMEGADEPSROOT + "/linux-amd64");
+        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
         linkBuilder.command().addAll(linuxlibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);

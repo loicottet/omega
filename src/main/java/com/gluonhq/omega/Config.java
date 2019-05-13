@@ -33,6 +33,7 @@ public class Config {
 
     private String depsRoot;
     private String JavaFXRoot;
+    private String StaticRoot;
     private boolean useJavaFX;
     private String graalVersion;
     private String target;
@@ -70,6 +71,18 @@ public class Config {
      */
     public void setJavaFXRoot(String javaFXRoot) {
         JavaFXRoot = javaFXRoot;
+    }
+
+    public String getStaticRoot() {
+        return StaticRoot;
+    }
+
+    /**
+     * Sets the Static Libs directory
+     * @param staticRoot the Static Libs directory
+     */
+    public void setStaticRoot(String staticRoot) {
+        StaticRoot = staticRoot;
     }
 
     public boolean isUseJavaFX() {
