@@ -387,6 +387,8 @@ public class SVMBridge {
             runtimeArgs.add("-H:CompilerBackend=llvm");
             runtimeArgs.add("-H:-AOTInline");
             runtimeArgs.add("-H:-SpawnIsolates");
+            runtimeArgs.add("-H:+RuntimeAssertions");
+            runtimeArgs.add("-H:DumpLLVMStackMap=stackmap.txt");
         }
     }
 

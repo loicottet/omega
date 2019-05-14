@@ -286,7 +286,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add("-o");
         linkBuilder.command().add(appPath.toString() + "/" + appName + "App");
         linkBuilder.command().add("-Wl,-no_implicit_dylibs");
-        linkBuilder.command().add("-Wl,-dead_strip");
+        if (!"llvm".equals(Omega.getConfig().getBackend())) {
+            linkBuilder.command().add("-Wl,-dead_strip");
+        }
         linkBuilder.command().add("-fPIC");
         linkBuilder.command().add("-isysroot");
         linkBuilder.command().add(isSimulator() ? SdkDirType.IPHONE_SIM.getSDKPath() : SdkDirType.IPHONE_DEV.getSDKPath());
