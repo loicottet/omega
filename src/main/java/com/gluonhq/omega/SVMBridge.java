@@ -359,10 +359,7 @@ public class SVMBridge {
                 "-H:+ReportExceptionStackTraces",
                 "-H:ReflectionConfigurationFiles=" + workDir + "/reflectionconfig-" + suffix + ".json"
                 ));
-        if (USE_JAVAFX) {
-            // don't add jni config for helloworld, as File parsing gives exceptions on AArch64
-            runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
-        }
+        runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
 
         if (config.isCrossCompile() || Omega.macHost) {
             runtimeArgs.add("-H:Kind=SHARED_LIBRARY");

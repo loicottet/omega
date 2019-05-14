@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
+
 public abstract class AbstractTargetConfiguration implements TargetConfiguration {
 
     Path gvmPath;
@@ -224,7 +226,9 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
 
     private static final List<String> releaseSymbolsList = Arrays.asList(
             "_Java_java_io_UnixFileSystem_canonicalize0",
-            "_Java_jdk_internal_misc_VM_getNanoTimeAdjustment",
+            "_Java_jdk_internal_misc_VM_getNanoTimeAdjustment");
+
+    private static final List<String> releaseSymbolsFXList = Arrays.asList(
             "_JNI_OnLoad_glass",
             "_JNI_OnLoad_prism_es2",
             "_JNI_OnLoad_javafx_font",
@@ -296,7 +300,12 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
     }
 
     public List<String> getReleaseSymbolsList() {
-        return releaseSymbolsList;
+        ArrayList<String> answer = new ArrayList<>();
+        answer.addAll(releaseSymbolsList);
+        if (USE_JAVAFX) {
+            answer.addAll(releaseSymbolsFXList);
+        }
+        return answer;
     }
 
     public List<String> getAdditionalBuildArgs() {

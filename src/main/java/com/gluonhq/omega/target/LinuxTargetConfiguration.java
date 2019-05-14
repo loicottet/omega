@@ -64,9 +64,14 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
             "com.sun.javafx.font.freetype.OSFreetype"
     );
 
+    private static final List<String> linuxlibsFX = Arrays.asList("-lffi",
+            "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
+            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm");
+
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
-            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio", "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm");
 
     @Override
     public List<String> getJavaFXJNIClassList() {
@@ -92,18 +97,6 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        if (USE_JAVAFX) {
-            Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
-                    .filter(s -> s.toString().endsWith(".so"))
-                    .forEach(f -> {
-                        try {
-                            Files.copy(f, gvmPath.resolve(f.getFileName()));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-        }
-
         Path workDir = this.gvmPath.getParent().resolve("linux").resolve(appName);
         System.err.println("Compiling additional sources to " + workDir);
         Files.createDirectories(workDir);
@@ -154,7 +147,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
         linkBuilder.command().add("-L"+SVMBridge.OMEGADEPSROOT + "/linux-amd64");
         linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
-        linkBuilder.command().addAll(linuxlibs);
+        linkBuilder.command().addAll(USE_JAVAFX ? linuxlibsFX : linuxlibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
         Process linkProcess = linkBuilder.start();

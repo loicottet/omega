@@ -254,9 +254,17 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             "_Java_com_sun_javafx_font_MacFontFinder_getSystemFontSize"
     );
 
+    private static final List<String> macoslibsFX = Arrays.asList("-lffi",
+            "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper",
+            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc",
+            "-Wl,-framework,Foundation", "-Wl,-framework,AppKit",
+            "-Wl,-framework,ApplicationServices", "-Wl,-framework,OpenGL",
+            "-Wl,-framework,QuartzCore", "-Wl,-framework,Security");
+
     private static final List<String> macoslibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper",
-            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc",
             "-Wl,-framework,Foundation", "-Wl,-framework,AppKit",
             "-Wl,-framework,ApplicationServices", "-Wl,-framework,OpenGL",
             "-Wl,-framework,QuartzCore", "-Wl,-framework,Security");
@@ -281,7 +289,9 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     public List<String> getReleaseSymbolsList() {
         ArrayList<String> answer = new ArrayList<>();
         answer.addAll(super.getReleaseSymbolsList());
-        answer.addAll(releaseSymbolsMacList);
+        if (USE_JAVAFX) {
+            answer.addAll(releaseSymbolsMacList);
+        }
         return answer;
     }
 
@@ -356,7 +366,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
         linkBuilder.command().add("-L" + SVMBridge.OMEGADEPSROOT + "/darwin-amd64");
         linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
-        linkBuilder.command().addAll(macoslibs);
+        linkBuilder.command().addAll(USE_JAVAFX ? macoslibsFX : macoslibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
         Process linkProcess = linkBuilder.start();
