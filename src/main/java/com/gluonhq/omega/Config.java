@@ -43,6 +43,7 @@ public class Config {
     private List<String> jniList;
     private List<String> delayInitList;
     private List<String> runtimeArgsList;
+    private List<String> releaseSymbolsList;
 
     private String appName;
     private String mainClassName;
@@ -167,6 +168,18 @@ public class Config {
 
     public List<String> getRuntimeArgsList() {
         return runtimeArgsList;
+    }
+
+    /**
+     * Sets additional lists of release symbols, like _Java_com_gluonhq*
+     * @param releaseSymbolsList a list of classes that will be added to the default release symbols list
+     */
+    public void setReleaseSymbolsList(List<String> releaseSymbolsList) {
+        this.releaseSymbolsList = releaseSymbolsList;
+    }
+
+    public List<String> getReleaseSymbolsList() {
+        return releaseSymbolsList;
     }
 
     /**

@@ -56,6 +56,7 @@ public class SVMBridge {
     private static final List<String> CUSTOM_REFLECTION_LIST = new ArrayList<>();
     private static final List<String> CUSTOM_JNI_LIST = new ArrayList<>();
     private static final List<String> CUSTOM_DELAY_INIT_LIST = new ArrayList<>();
+    private static final List<String> CUSTOM_RELEASE_SYMBOL_LIST = new ArrayList<>();
 
     static List<String> classPath;
     static List<String> modulePath;
@@ -83,6 +84,7 @@ public class SVMBridge {
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
         SVMBridge.CUSTOM_JNI_LIST.addAll(omegaConfig.getJniList());
         SVMBridge.CUSTOM_DELAY_INIT_LIST.addAll(omegaConfig.getDelayInitList());
+        SVMBridge.CUSTOM_RELEASE_SYMBOL_LIST.addAll(omegaConfig.getReleaseSymbolsList());
 
         // TODO: add iOS
         String hostedNative = Omega.macHost ? "darwin-amd64" : "linux-amd64";
@@ -150,7 +152,6 @@ public class SVMBridge {
         createReflectionConfig(suffix);
         createJNIConfig(suffix);
 
-        // TODO: include symbols from project, like _Java_com_gluonhq*
         createReleaseSymbols();
 
         setClassPath();
@@ -447,6 +448,9 @@ public class SVMBridge {
         }
         try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
             for (String release : config.getReleaseSymbolsList()) {
+                bw.write(release.concat("\n"));
+            }
+            for (String release : CUSTOM_RELEASE_SYMBOL_LIST) {
                 bw.write(release.concat("\n"));
             }
         }
