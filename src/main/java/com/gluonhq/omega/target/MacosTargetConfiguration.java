@@ -31,7 +31,6 @@ import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -365,15 +364,18 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         }
 
         linkBuilder.command().add("-L" + SVMBridge.OMEGADEPSROOT + "/darwin-amd64");
-        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
+//        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
         linkBuilder.command().addAll(USE_JAVAFX ? macoslibsFX : macoslibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
+        String linkcmds = String.join(" ", linkBuilder.command());
+        logDebug("linkcmds = " + linkcmds);
+        FileOps.createScript(gvmPath.resolve("link.sh"), linkcmds);
+
         Process linkProcess = linkBuilder.start();
         FileOps.mergeProcessOutput(linkProcess.getInputStream());
         int result = linkProcess.waitFor();
-        String linkcmds = String.join(" ", linkBuilder.command());
-        logDebug("linkcmds = " + linkcmds);
+
         logDebug("result of linking = " + result);
         if (result != 0) {
             throw new RuntimeException("Error linking");

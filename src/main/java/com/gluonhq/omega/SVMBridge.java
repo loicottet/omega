@@ -40,8 +40,10 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -261,6 +263,8 @@ public class SVMBridge {
         compileBuilder.redirectErrorStream(true);
         String compileCmd = String.join(" ", compileBuilder.command());
         System.err.println("compileCmd = " + compileCmd);
+        FileOps.createScript(workDir.resolve("compile.sh"), compileCmd);
+
         Process compileProcess = compileBuilder.start();
         FileOps.mergeProcessOutput(compileProcess.getInputStream());
         int result = compileProcess.waitFor();

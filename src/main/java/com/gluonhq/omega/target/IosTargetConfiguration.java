@@ -27,16 +27,48 @@
  */
 package com.gluonhq.omega.target;
 
-import com.dd.plist.*;
-import com.gluonhq.omega.*;
-import com.gluonhq.omega.util.*;
+import com.dd.plist.BinaryPropertyListWriter;
+import com.dd.plist.NSArray;
+import com.dd.plist.NSDictionary;
+import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
+import com.dd.plist.PropertyListParser;
+import com.gluonhq.omega.Omega;
+import com.gluonhq.omega.SVMBridge;
+import com.gluonhq.omega.util.DeviceIO;
+import com.gluonhq.omega.util.DeviceLockedException;
+import com.gluonhq.omega.util.FileOps;
+import com.gluonhq.omega.util.IDevice;
+import com.gluonhq.omega.util.MobileDeviceBridge;
+import com.gluonhq.omega.util.NSDictionaryEx;
+import com.gluonhq.omega.util.ProcessArgs;
+import com.gluonhq.omega.util.ProvisioningProfile;
+import com.gluonhq.omega.util.SigningIdentity;
+import com.gluonhq.omega.util.XcodeUtil;
 import jnr.ffi.Pointer;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipFile;
@@ -267,11 +299,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().addAll(ioslibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
+        String linkcmds = String.join(" ", linkBuilder.command());
+        logDebug("linkcmds = " + linkcmds);
+        FileOps.createScript(gvmPath.resolve("link.sh"), linkcmds);
+
         Process linkProcess = linkBuilder.start();
         FileOps.mergeProcessOutput(linkProcess.getInputStream());
         int result = linkProcess.waitFor();
-        String linkcmds = String.join(" ", linkBuilder.command());
-        System.err.println("linkcmds = "+linkcmds);
         System.err.println("result of linking = "+result);
         if (result != 0) {
             throw new RuntimeException("Error linking");
@@ -398,7 +432,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
             Process p = pb.start();
             InputStream os = p.getInputStream();
-            try( BufferedReader br = new BufferedReader(new InputStreamReader(os))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(os))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     int b0 = line.indexOf("(") + 1;

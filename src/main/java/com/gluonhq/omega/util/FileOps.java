@@ -30,10 +30,13 @@ package com.gluonhq.omega.util;
 import com.gluonhq.omega.Omega;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -42,9 +45,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -183,5 +188,32 @@ public class FileOps {
             }
         };
         new Thread(r).start();
+    }
+
+    public static void createScript(Path script, String cmd) throws IOException {
+        File f = script.toFile();
+        if (f.exists()) {
+            f.delete();
+        }
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
+            bw.write("#!/bin/sh\n");
+            String[] split = cmd.split("\\s");
+            for (String s : split) {
+                if (s.contains("$")) {
+                    String[] s2 = s.split("=");
+                    bw.write(s2[0].concat("=\"")
+                            .concat(s2[1].replace("$", "\\$"))
+                            .concat("\" \\\n"));
+                } else {
+                    bw.write(s.concat(" \\\n"));
+                }
+            }
+        }
+        Set<PosixFilePermission> perms = new HashSet<>();
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+        perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+        Files.setPosixFilePermissions(script, perms);
     }
 }
