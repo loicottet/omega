@@ -108,6 +108,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
 
     private static final List<String> javafxReflectionIosClassList = Arrays.asList(
+            "com.sun.prism.es2.ES2Pipeline",
             "com.sun.prism.es2.IOSGLFactory",
             "com.sun.javafx.font.coretext.CTFactory",
             "com.sun.scenario.effect.impl.es2.ES2ShaderSource",
@@ -122,6 +123,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.glass.ui.ios.IosView",
             "com.sun.glass.ui.ios.IosWindow",
             "com.sun.glass.ui.ios.IosGestureSupport",
+            "com.sun.glass.ui.ios.IosMenuBarDelegate",
             "java.util.Vector",
             "com.sun.javafx.font.coretext.CGAffineTransform",
             "com.sun.javafx.font.coretext.CGPoint",
@@ -131,15 +133,20 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.javafx.font.FontConfigManager$FontConfigFont"
     );
 
-    private static final List<String> rerunIosClinitList = Arrays.asList();
+    private static final List<String> releaseSymbolsIOSList = Arrays.asList(
+            "_JNI_OnLoad*",
+            "_Java_com_sun*",
+            "_Java_com_gluonhq*"
+            );
 
     private static final List<String> ioslibs = Arrays.asList(
-            "-Wl,-framework,Foundation", "-Wl,-framework,CoreGraphics", "-Wl,-framework,OpenGLES",
-            "-Wl,-framework,MobileCoreServices", "-Wl,-framework,CoreText", "-Wl,-framework,ImageIO",
+            "-lffi", "-lpthread","-lz", "-lstrictmath", "-llibchelper",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm",
+            "-Wl,-framework,Foundation", "-Wl,-framework,UIKit", "-Wl,-framework,CoreGraphics", "-Wl,-framework,MobileCoreServices",
+            "-Wl,-framework,OpenGLES", "-Wl,-framework,CoreText", "-Wl,-framework,ImageIO",
             "-Wl,-framework,UserNotifications", "-Wl,-framework,CoreBluetooth", "-Wl,-framework,CoreLocation",
             "-Wl,-framework,CoreMedia", "-Wl,-framework,AVFoundation", "-Wl,-framework,Accelerate",
-            "-Wl,-framework,CoreVideo", "-Wl,-framework,QuartzCore", "-Wl,-framework,UIKit",
-            "-lffi", "-lpthread","-lz", "-lstrictmath", "-llibchelper");
+            "-Wl,-framework,CoreVideo", "-Wl,-framework,QuartzCore");
 
     private static final List<String> javafxLibs = Arrays.asList("prism_es2", "glass", "javafx_font", "prism_common");
 
@@ -173,6 +180,16 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         ArrayList<String> answer = new ArrayList<>();
         answer.addAll(super.getReflectionClassList());
         answer.addAll(javafxReflectionIosClassList);
+        return answer;
+    }
+
+    @Override
+    public List<String> getReleaseSymbolsList() {
+        ArrayList<String> answer = new ArrayList<>();
+        answer.addAll(super.getReleaseSymbolsList());
+        if (USE_JAVAFX) {
+            answer.addAll(releaseSymbolsIOSList);
+        }
         return answer;
     }
 
@@ -212,7 +229,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         FileOps.copyResource("/native/ios/AppDelegate" + (isSimulator() ? "-sim" : "") + ".m", workDir.resolve("AppDelegate.m"));
         FileOps.copyResource("/native/ios/AppDelegate.h", workDir.resolve("AppDelegate.h"));
         FileOps.copyResource("/native/ios/main.m", workDir.resolve("main.m"));
-        FileOps.copyResource("/native/ios/release.symbols", workDir.resolve("release.symbols"));
+        FileOps.copyResource("/native/ios/thread.m", workDir.resolve("thread.m"));
 
         ProcessBuilder processBuilder = new ProcessBuilder("clang");
         processBuilder.command().add("-xobjective-c");
@@ -225,6 +242,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         processBuilder.command().add("-isysroot");
         processBuilder.command().add(isSimulator() ? SdkDirType.IPHONE_SIM.getSDKPath() : SdkDirType.IPHONE_DEV.getSDKPath());
         processBuilder.command().add("main.m");
+        processBuilder.command().add("thread.m");
         processBuilder.command().add("AppDelegate.m");
         processBuilder.directory(workDir.toFile());
         String cmds = String.join(" ", processBuilder.command());
@@ -289,14 +307,16 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
         linkBuilder.command().add(appPath.toString() + "/AppDelegate.o");
         linkBuilder.command().add(appPath.toString() + "/main.o");
+        linkBuilder.command().add(appPath.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
         // LLVM
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
         linkBuilder.command().add("-L" + SVMBridge.OMEGADEPSROOT + "/darwin-amd64");
-        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
+//        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
         linkBuilder.command().addAll(ioslibs);
+
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
         String linkcmds = String.join(" ", linkBuilder.command());
