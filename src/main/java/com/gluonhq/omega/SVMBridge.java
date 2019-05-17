@@ -183,7 +183,7 @@ public class SVMBridge {
         linkedList.add("-Xss10m");
         linkedList.add("-Xms1g");
         linkedList.add("-Xmx13441813704");
-        linkedList.add("-Dprism.marlinrasterizer=false");
+//        linkedList.add("-Dprism.marlinrasterizer=false");
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalVersion());
@@ -384,12 +384,8 @@ public class SVMBridge {
                 "-H:IncludeResources=.*png$",
                 "-H:IncludeResources=.*css$",
                 "-H:+ReportUnsupportedElementsAtRuntime",
-                "-H:+AllowIncompleteClasspath",
-                "-H:+PrintClassInitialization",
-                "-H:+PrintAnalysisCallTree"));
-        // TODO: Enable URL:
-//                "-H:EnableURLProtocols=http,https",
-//                "-H:+EnableAllSecurityServices"
+                "-H:+AllowIncompleteClasspath"));
+
         if (USE_LLVM) {
             runtimeArgs.add("-H:CompilerBackend=llvm");
             runtimeArgs.add("-H:-MultiThreaded");
@@ -406,7 +402,7 @@ public class SVMBridge {
         }
         try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f)))) {
             bw.write("[\n");
-            writeSingleEntry(bw, mainClass);
+            writeSingleEntry(bw, mainClass, false);
             if (USE_JAVAFX) {
                 for (String javafxClass : config.getReflectionClassList()) {
                     writeEntry(bw, javafxClass);
@@ -429,7 +425,9 @@ public class SVMBridge {
             bw.write("[\n");
             bw.write("  {\n    \"name\" : \"" + mainClass + "\"\n  }\n");
             for (String javaClass : config.getJavaJNIClassList()) {
-                writeEntry(bw, javaClass);
+                // TODO: create list of exclusions
+                writeEntry(bw, javaClass,
+                        suffix.equals("mac") && javaClass.equals("java.lang.Thread"));
             }
             if (USE_JAVAFX) {
                 for (String javafxClass : config.getJavaFXJNIClassList()) {
@@ -460,16 +458,19 @@ public class SVMBridge {
         }
     }
 
-    private static void writeEntry(BufferedWriter bw, String javafxClass) throws Exception {
-        bw.write(",\n");
-        writeSingleEntry(bw, javafxClass);
+    private static void writeEntry(BufferedWriter bw, String javaClass) throws Exception {
+        writeEntry(bw, javaClass, false);
     }
 
-    private static void writeSingleEntry (BufferedWriter bw, String javafxClass) throws Exception {
+    private static void writeEntry(BufferedWriter bw, String javaClass, boolean exclude) throws Exception {
+        bw.write(",\n");
+        writeSingleEntry(bw, javaClass, exclude);
+    }
+
+    private static void writeSingleEntry (BufferedWriter bw, String javaClass, boolean exclude) throws Exception {
         bw.write("  {\n");
-        bw.write("    \"name\" : \"" + javafxClass + "\"");
-        // TODO: create list of exclusions
-        if (! javafxClass.equals("java.lang.Thread")) {
+        bw.write("    \"name\" : \"" + javaClass + "\"");
+        if (! exclude) {
             bw.write(",\n");
             bw.write("    \"allDeclaredConstructors\" : true,\n");
             bw.write("    \"allPublicConstructors\" : true,\n");
