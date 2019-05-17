@@ -172,6 +172,7 @@ public class Omega {
      * args[5] workDir the directory of the application (e.g. build/omega/gvm/tmp)
      * args[6] deps directory (e.g. build/omega/deps)
      * args[7] JavaFX SDK directory (if it is null or empty, JavaFX won't be used)
+     * args[8] Java static directory
      */
     public static void main(String[] args) {
         try {
@@ -182,11 +183,13 @@ public class Omega {
             String target = args[4];
             String deps = args[6];
             String sdk = args[7];
+            String staticDir = args[8];
 
             Config config = new Config();
             config.setDepsRoot(deps);
             config.setJavaFXRoot(sdk);
             config.setUseJavaFX(sdk != null && ! sdk.isEmpty());
+            config.setStaticRoot(staticDir);
             config.setAppName(appName);
             config.setMainClassName(mainClassName);
             Omega.nativeCompile(buildRoot, config, cp, target);
