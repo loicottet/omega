@@ -45,6 +45,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
 
     private static final List<String> javaJNIClassList = Arrays.asList(
             "java.io.File",
+            "java.io.InputStream",
             "java.lang.Boolean",
             "java.lang.Class",
             "java.lang.ClassNotFoundException",
