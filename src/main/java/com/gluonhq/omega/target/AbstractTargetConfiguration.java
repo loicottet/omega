@@ -269,8 +269,8 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
 
     @Override
     public void compile(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
-        compileApplication(gvmPath, classPath, mainClassName, appName, target);
         compileAdditionalSources();
+        compileApplication(gvmPath, classPath, mainClassName, appName, target);
     }
 
     @Override
