@@ -243,4 +243,21 @@ public class Omega {
         }
         return config;
     }
+
+    public static  String getTarget(Config myconfig) {
+        String target = "";
+        if (myconfig.getTarget().equals("host")) {
+            String osname = System.getProperty("os.name");
+            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
+                target = "linux";
+            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
+                target = "macosx";
+            }
+        } else if (config.getTarget().equals("ios") || myconfig.getTarget().equals("ios-sim")) {
+            target = "ios";
+        } else {
+            throw new RuntimeException("No valid target: " + myconfig.getTarget());
+        }
+        return target;
+    }
 }
