@@ -144,7 +144,10 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         }
 
         linkBuilder.command().add("-L"+SVMBridge.GRAALSDK + "svm/clibraries/linux-amd64");
-        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
+        linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
+        if (USE_JAVAFX) {
+            linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
+        }
         linkBuilder.command().addAll(USE_JAVAFX ? linuxlibsFX : linuxlibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);

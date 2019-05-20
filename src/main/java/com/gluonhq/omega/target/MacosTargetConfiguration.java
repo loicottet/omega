@@ -422,9 +422,10 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         }
 
         linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/darwin-amd64");
-        linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
         linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
-//        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
+        if (USE_JAVAFX) {
+            linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
+        }
         linkBuilder.command().addAll(USE_JAVAFX ? macoslibsFX : macoslibs);
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);

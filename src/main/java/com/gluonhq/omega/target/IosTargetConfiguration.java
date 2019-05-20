@@ -313,7 +313,10 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             linkBuilder.command().add(o2.toString());
         }
         linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/darwin-amd64");
-//        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
+        linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
+        if (USE_JAVAFX) {
+            linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
+        }
         linkBuilder.command().addAll(ioslibs);
 
         linkBuilder.directory(workDir.toFile());
