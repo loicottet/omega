@@ -113,7 +113,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.javafx.font.coretext.CTFactory",
             "com.sun.scenario.effect.impl.es2.ES2ShaderSource",
             "com.sun.glass.ui.ios.IosPlatformFactory",
-            "com.sun.glass.ui.ios.IosApplication"
+            "com.sun.glass.ui.ios.IosApplication",
+            "com.sun.javafx.iio.ios.IosImageLoader",
+            "com.sun.javafx.iio.ios.IosImageLoaderFactory"
     );
 
     private static final List<String>javafxJNIIosClassList = Arrays.asList(
@@ -130,7 +132,8 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.javafx.font.coretext.CGRect",
             "com.sun.javafx.font.coretext.CGSize",
             "com.sun.javafx.font.FontConfigManager$FcCompFont",
-            "com.sun.javafx.font.FontConfigManager$FontConfigFont"
+            "com.sun.javafx.font.FontConfigManager$FontConfigFont",
+            "com.sun.javafx.iio.ios.IosImageLoader"
     );
 
     private static final List<String> releaseSymbolsIOSList = Arrays.asList(
@@ -148,7 +151,8 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "-Wl,-framework,CoreMedia", "-Wl,-framework,AVFoundation", "-Wl,-framework,Accelerate",
             "-Wl,-framework,CoreVideo", "-Wl,-framework,QuartzCore");
 
-    private static final List<String> javafxLibs = Arrays.asList("prism_es2", "glass", "javafx_font", "prism_common");
+    private static final List<String> javafxLibs = Arrays.asList(
+            "prism_es2", "glass", "javafx_font", "prism_common", "javafx_iio");
 
     private static final List<String> assets = new ArrayList<>(Arrays.asList(
             "Default-375w-667h@2x~iphone.png", "Default-414w-736h@3x~iphone.png", "Default-portrait@2x~ipad.png",

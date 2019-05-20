@@ -47,6 +47,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "java.io.File",
             "java.lang.Boolean",
             "java.lang.Class",
+            "java.lang.ClassNotFoundException",
             "java.lang.Integer",
             "java.lang.Iterable",
             "java.lang.Long",
