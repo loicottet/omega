@@ -113,9 +113,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.javafx.font.coretext.CTFactory",
             "com.sun.scenario.effect.impl.es2.ES2ShaderSource",
             "com.sun.glass.ui.ios.IosPlatformFactory",
-            "com.sun.glass.ui.ios.IosApplication",
-            "com.sun.javafx.iio.ios.IosImageLoader",
-            "com.sun.javafx.iio.ios.IosImageLoaderFactory"
+            "com.sun.glass.ui.ios.IosApplication"
     );
 
     private static final List<String>javafxJNIIosClassList = Arrays.asList(

@@ -80,7 +80,7 @@ public class SVMBridge {
 
     private static AbstractTargetConfiguration config;
 
-    private static void init() {
+    static void init() {
         Config omegaConfig = Omega.getConfig();
         String target = Omega.getTarget(omegaConfig);
         Path graallibs = USER_OMEGA_PATH
@@ -374,7 +374,8 @@ public class SVMBridge {
                 "-H:IncludeResources=.*png$",
                 "-H:IncludeResources=.*css$",
                 "-H:+ReportUnsupportedElementsAtRuntime",
-                "-H:+AllowIncompleteClasspath"));
+                "-H:+AllowIncompleteClasspath" /*,
+                "-H:EnableURLProtocols=http,https" */));
 
         if (USE_LLVM) {
             runtimeArgs.add("-H:CompilerBackend=llvm");

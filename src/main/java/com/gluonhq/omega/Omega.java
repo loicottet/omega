@@ -192,9 +192,9 @@ public class Omega {
      * args[3] cp the list of directories and jars that make up the class path
      * args[4] true if target is not the host machine, iOS for now
      * args[5] workDir the directory of the application (e.g. build/omega/gvm/tmp)
-     * args[6] deps directory (e.g. build/omega/deps)
-     * args[7] JavaFX SDK directory (if it is null or empty, JavaFX won't be used)
-     * args[8] Java static directory
+     * args[6] graal Libs Version directory (e.g. 13-ea+1)
+     * args[7] java static Version directory (e.g. 13-ea+1)
+     * args[8] JavaFX SDK Version directory (e.g. 13-ea+1)
      */
     public static void main(String[] args) {
         try {
@@ -203,17 +203,20 @@ public class Omega {
             String appName = args[2];
             String cp = args[3];
             String target = args[4];
-            String deps = args[6];
-            String sdk = args[7];
-            String staticDir = args[8];
+            String graalLibsVersion = args[6];
+            String javaStaticVersion = args[7];
+            String javafxStaticSDKVersion = args[8];
 
             Config config = new Config();
-            config.setDepsRoot(deps);
-            config.setJavaFXRoot(sdk);
-            config.setUseJavaFX(sdk != null && ! sdk.isEmpty());
-            config.setStaticRoot(staticDir);
+            config.setGraalLibsVersion(graalLibsVersion);
+            config.setJavaStaticSdkVersion(javaStaticVersion);
+            config.setJavafxStaticSdkVersion(javafxStaticSDKVersion);
+
             config.setAppName(appName);
             config.setMainClassName(mainClassName);
+
+            SVMBridge.init();
+
             Omega.nativeCompile(buildRoot, config, cp, target);
 
             Path workDir = Path.of(args[5]);
