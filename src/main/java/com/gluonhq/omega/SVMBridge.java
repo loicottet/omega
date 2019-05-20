@@ -30,6 +30,7 @@ package com.gluonhq.omega;
 import com.gluonhq.omega.target.AbstractTargetConfiguration;
 import com.gluonhq.omega.target.LinuxTargetConfiguration;
 import com.gluonhq.omega.target.MacosTargetConfiguration;
+import com.gluonhq.omega.util.FileDeps;
 import com.gluonhq.omega.util.FileOps;
 
 import java.io.BufferedWriter;
@@ -40,13 +41,12 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SVMBridge {
 
@@ -80,7 +80,6 @@ public class SVMBridge {
     private static void init() {
         Config omegaConfig = Omega.getConfig();
         SVMBridge.OMEGADEPSROOT = omegaConfig.getDepsRoot();
-        SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
         SVMBridge.USE_JAVAFX = omegaConfig.isUseJavaFX();
         SVMBridge.USE_LLVM = "llvm".equals(omegaConfig.getBackend());
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
@@ -88,42 +87,14 @@ public class SVMBridge {
         SVMBridge.CUSTOM_DELAY_INIT_LIST.addAll(omegaConfig.getDelayInitList());
         SVMBridge.CUSTOM_RELEASE_SYMBOL_LIST.addAll(omegaConfig.getReleaseSymbolsList());
 
-        // TODO: add iOS
-        String hostedNative = Omega.macHost ? "darwin-amd64" : "linux-amd64";
-
-        // merge Java and JavaFX static libraries with Graal's
-        Path staticlibs = Path.of(OMEGADEPSROOT, hostedNative);
-
+        // LIBS
         try {
-            Files.walk(Path.of(Omega.getConfig().getStaticRoot()))
-                    .filter(s -> s.toString().endsWith(".a"))
-                    .forEach(f -> {
-                        try {
-                            Path lib = staticlibs.resolve(f.getFileName());
-                            if (! Files.exists(lib)) {
-                                Files.copy(f, lib);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-            if (USE_JAVAFX) {
-                Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
-                        .filter(s -> s.toString().endsWith(".a"))
-                        .forEach(f -> {
-                            try {
-                                Path lib = staticlibs.resolve(f.getFileName());
-                                if (! Files.exists(lib)) {
-                                    Files.copy(f, lib);
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
-            }
+            FileDeps.setupDependencies(omegaConfig);
+            FileDeps.copyDependencies(omegaConfig);
         } catch (IOException e) {
-            throw new RuntimeException("Error copying static libraries");
+            e.printStackTrace();
         }
+        SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
     }
 
     public static void compile(Path workingDir, List<Path> gClassdir, String className, String appName,
@@ -146,7 +117,13 @@ public class SVMBridge {
         SVMBridge.appName = appName;
         System.err.println("appName: " + SVMBridge.appName);
 
-        classDir = gClassdir;
+        List<Path> path = Stream.of(new File(Omega.getConfig().getDepsRoot()).listFiles())
+                .filter(f -> ! Files.isDirectory(f.toPath()) && f.getName().endsWith(".jar"))
+                .map(File::toPath)
+                .collect(Collectors.toList());
+
+        path.addAll(gClassdir);
+        classDir = path;
         System.err.println("classDir: " + classDir);
 
         String suffix = config instanceof LinuxTargetConfiguration ? "linux" :
@@ -186,7 +163,7 @@ public class SVMBridge {
 //        linkedList.add("-Dprism.marlinrasterizer=false");
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
-        linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalVersion());
+        linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
 
         if (Omega.macHost) {
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
@@ -198,7 +175,7 @@ public class SVMBridge {
         }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
-        linkedList.add("-Dorg.graalvm.version=" + Omega.getConfig().getGraalVersion());
+        linkedList.add("-Dorg.graalvm.version=" + Omega.getConfig().getGraalLibsVersion());
         linkedList.add("-Dcom.oracle.graalvm.isaot=true");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.runtime=ALL-UNNAMED");

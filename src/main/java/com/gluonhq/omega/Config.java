@@ -31,11 +31,14 @@ import java.util.List;
 
 public class Config {
 
+    private String graalLibsVersion;
+    private String javaStaticSdkVersion;
+    private String javafxStaticSdkVersion;
     private String depsRoot;
     private String JavaFXRoot;
     private String StaticRoot;
-    private boolean useJavaFX;
-    private String graalVersion;
+    private boolean useJavaFX = true;
+
     private String target;
     private String backend;
     private List<String> bundles;
@@ -49,6 +52,42 @@ public class Config {
     private String mainClassName;
 
     public Config() {}
+
+    public String getGraalLibsVersion() {
+        return graalLibsVersion;
+    }
+
+    /**
+     * Sets the Graal libs version
+     * @param graalLibsVersion the Graal libs version
+     */
+    public void setGraalLibsVersion(String graalLibsVersion) {
+        this.graalLibsVersion = graalLibsVersion;
+    }
+
+    public String getJavaStaticSdkVersion() {
+        return javaStaticSdkVersion;
+    }
+
+    /**
+     * Sets the Java static SDK version
+     * @param javaStaticSdkVersion the Java static SDK version
+     */
+    public void setJavaStaticSdkVersion(String javaStaticSdkVersion) {
+        this.javaStaticSdkVersion = javaStaticSdkVersion;
+    }
+
+    public String getJavafxStaticSdkVersion() {
+        return javafxStaticSdkVersion;
+    }
+
+    /**
+     * Sets the JavaFX static SDK version
+     * @param javafxStaticSdkVersion the JavaFX static SDK version
+     */
+    public void setJavafxStaticSdkVersion(String javafxStaticSdkVersion) {
+        this.javafxStaticSdkVersion = javafxStaticSdkVersion;
+    }
 
     public String getDepsRoot() {
         return depsRoot;
@@ -92,14 +131,6 @@ public class Config {
 
     public void setUseJavaFX(boolean useJavaFX) {
         this.useJavaFX = useJavaFX;
-    }
-
-    public String getGraalVersion() {
-        return graalVersion;
-    }
-
-    public void setGraalVersion(String graalVersion) {
-        this.graalVersion = graalVersion;
     }
 
     public String getTarget() {
