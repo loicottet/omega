@@ -29,6 +29,7 @@ package com.gluonhq.omega.util;
 
 import com.gluonhq.omega.Config;
 import com.gluonhq.omega.Omega;
+import com.gluonhq.omega.SVMBridge;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,19 +39,14 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -83,17 +79,14 @@ public class FileDeps {
             "libglass.a"
     );
 
-    public static final Path USER_OMEGA_PATH = Path.of(System.getProperty("user.home"))
-            .resolve(".gluon").resolve("omega");
-
     public static void setupDependencies(Config config) throws IOException {
         String target = Omega.getTarget(config);
 
         boolean downloadGraalLibs = false, downloadJavaStatic = false, downloadJavaFXStatic = false;
 
-        if (! USER_OMEGA_PATH.toFile().isDirectory()) {
+        if (! SVMBridge.USER_OMEGA_PATH.toFile().isDirectory()) {
             LOGGER.info("User Omega repository not found");
-            Files.createDirectories(USER_OMEGA_PATH);
+            Files.createDirectories(SVMBridge.USER_OMEGA_PATH);
             downloadGraalLibs = true;
             downloadJavaStatic = true;
             downloadJavaFXStatic = true;
@@ -101,10 +94,7 @@ public class FileDeps {
             // GraalLibs
 
             LOGGER.info("Process graalLibs dependencies");
-            Path graallibs = USER_OMEGA_PATH
-                    .resolve("graalLibs")
-                    .resolve(config.getGraalLibsVersion())
-                    .resolve("lib");
+            Path graallibs = Path.of(config.getDepsRoot());
 
             if (! graallibs.toFile().isDirectory()) {
                 LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/lib folder not found");
@@ -136,10 +126,7 @@ public class FileDeps {
             // Java Static
 
             LOGGER.info("Process JavaStatic dependencies");
-            Path javaStatic = USER_OMEGA_PATH
-                .resolve("javaStaticSdk")
-                .resolve(config.getJavaStaticSdkVersion())
-                .resolve(target + "-libs-" + config.getJavaStaticSdkVersion()); // TODO: Check this name
+            Path javaStatic = Path.of(config.getStaticRoot());
 
             if (! javaStatic.toFile().isDirectory()) {
                 LOGGER.info("javaStaticSdk/" + config.getGraalLibsVersion() + "/" + target + "-libs folder not found");
@@ -164,11 +151,8 @@ public class FileDeps {
             // JavaFX Static
 
             LOGGER.info("Process JavaFXStatic dependencies");
-            Path javafxStatic = USER_OMEGA_PATH
-                    .resolve("javafxStaticSdk")
-                    .resolve(config.getJavaStaticSdkVersion())
-                    .resolve(target + "-sdk")
-                    .resolve("lib");;
+            Path javafxStatic = Path.of(config.getJavaFXRoot())
+                    .resolve("lib");
 
             if (! javafxStatic.toFile().isDirectory()) {
                 LOGGER.info("javafxStaticSdk/" + config.getGraalLibsVersion() + "/" + target + "-sdk/lib folder not found");
@@ -192,24 +176,16 @@ public class FileDeps {
         }
 
         if (downloadGraalLibs) {
-            downloadGraalZip(USER_OMEGA_PATH, config);
+            downloadGraalZip(SVMBridge.USER_OMEGA_PATH, config);
         }
 
         if (downloadJavaStatic) {
-            downloadJavaZip(target, USER_OMEGA_PATH, config);
+            downloadJavaZip(target, SVMBridge.USER_OMEGA_PATH, config);
         }
 
         if (downloadJavaFXStatic) {
-            downloadJavaFXZip(target, USER_OMEGA_PATH, config);
+            downloadJavaFXZip(target, SVMBridge.USER_OMEGA_PATH, config);
         }
-
-        config.setStaticRoot(USER_OMEGA_PATH.resolve("javaStaticSdk")
-                .resolve(config.getJavaStaticSdkVersion())
-                .resolve(target + "-libs-" + config.getJavaStaticSdkVersion()).toString());
-
-        config.setJavaFXRoot(USER_OMEGA_PATH.resolve("javafxStaticSdk")
-                .resolve(config.getJavaStaticSdkVersion())
-                .resolve(target + "-sdk").toString());
 
         LOGGER.info("Setup dependencies done");
     }

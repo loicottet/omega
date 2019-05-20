@@ -46,7 +46,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SVMBridge {
 
@@ -55,6 +54,9 @@ public class SVMBridge {
     public static String JAVASDK;
     public static boolean USE_JAVAFX;
     private static boolean USE_LLVM;
+
+    public static final Path USER_OMEGA_PATH = Path.of(System.getProperty("user.home"))
+            .resolve(".gluon").resolve("omega");
 
     private static final List<String> CUSTOM_REFLECTION_LIST = new ArrayList<>();
     private static final List<String> CUSTOM_JNI_LIST = new ArrayList<>();
@@ -81,16 +83,23 @@ public class SVMBridge {
     private static void init() {
         Config omegaConfig = Omega.getConfig();
         String target = Omega.getTarget(omegaConfig);
-        Path graallibs = FileDeps.USER_OMEGA_PATH
+        Path graallibs = USER_OMEGA_PATH
                 .resolve("graalLibs")
                 .resolve(omegaConfig.getGraalLibsVersion())
                 .resolve("lib");
-        Path javalibs = FileDeps.USER_OMEGA_PATH
+        omegaConfig.setDepsRoot(graallibs.toString());
+        Path javalibs = USER_OMEGA_PATH
                 .resolve("javaStaticSdk")
                 .resolve(omegaConfig.getJavaStaticSdkVersion())
                 .resolve(target + "-libs-" + omegaConfig.getJavaStaticSdkVersion());
-        SVMBridge.GRAALSDK = graallibs.toAbsolutePath().toString();
-        SVMBridge.JAVASDK = javalibs.toAbsolutePath().toString();
+        omegaConfig.setStaticRoot(javalibs.toString());
+        omegaConfig.setJavaFXRoot(USER_OMEGA_PATH.resolve("javafxStaticSdk")
+                .resolve(omegaConfig.getJavaStaticSdkVersion())
+                .resolve(target + "-sdk").toString());
+
+        SVMBridge.GRAALSDK = graallibs.toString();
+        SVMBridge.JAVASDK = javalibs.toString();
+        SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
         SVMBridge.USE_JAVAFX = omegaConfig.isUseJavaFX();
         SVMBridge.USE_LLVM = "llvm".equals(omegaConfig.getBackend());
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
@@ -104,7 +113,6 @@ public class SVMBridge {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
     }
 
     public static void compile(Path workingDir, List<Path> gClassdir, String className, String appName,
@@ -127,13 +135,7 @@ public class SVMBridge {
         SVMBridge.appName = appName;
         System.err.println("appName: " + SVMBridge.appName);
 
-        List<Path> path = Stream.of(new File(Omega.getConfig().getDepsRoot()).listFiles())
-                .filter(f -> ! Files.isDirectory(f.toPath()) && f.getName().endsWith(".jar"))
-                .map(File::toPath)
-                .collect(Collectors.toList());
-
-        path.addAll(gClassdir);
-        classDir = path;
+        classDir = gClassdir;
         System.err.println("classDir: " + classDir);
 
         String suffix = config instanceof LinuxTargetConfiguration ? "linux" :
@@ -317,7 +319,7 @@ public class SVMBridge {
     private static void setRuntimeArgs(String suffix) {
         String cp = getBuilderClasspath().stream().map(Path::toString)
                 .collect(Collectors.joining(File.pathSeparator));
-        cp = cp +  File.pathSeparator  + classDir.stream()
+        cp = cp + File.pathSeparator + classDir.stream()
                 .map(Path::toString)
                 .filter(s -> !s.contains("javafx-"))
                 .collect(Collectors.joining(File.pathSeparator));
@@ -347,7 +349,7 @@ public class SVMBridge {
         runtimeArgs = new ArrayList<>(Arrays.asList(
                 "-imagecp", cp,
                 "-H:Path=" + workDir,
-                "-H:CLibraryPath=" + Paths.get(GRAALSDK).resolve("svm/clibraries/"+hostedNative).toFile().getAbsolutePath(),
+                "-H:CLibraryPath=" + Paths.get(GRAALSDK).resolve("svm/clibraries/" + hostedNative).toFile().getAbsolutePath(),
                 "-H:Class=" + mainClass,
                 "-H:+ReportExceptionStackTraces",
                 "-H:ReflectionConfigurationFiles=" + workDir + "/reflectionconfig-" + suffix + ".json"
@@ -380,7 +382,6 @@ public class SVMBridge {
             runtimeArgs.add("-H:-SpawnIsolates");
         }
     }
-
 
     private static void createReflectionConfig(String suffix) throws Exception {
         Path reflectionPath = workDir.resolve("reflectionconfig-" + suffix + ".json");

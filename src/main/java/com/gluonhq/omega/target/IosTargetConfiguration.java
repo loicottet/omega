@@ -194,8 +194,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
-    public void compileApplication(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
-        super.compileApplication(gvmPath, classPath, mainClassName, appName, target);
+    public void compileApplication() throws Exception {
         setupArch(target);
         System.err.println("Compiling ios application");
         SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);

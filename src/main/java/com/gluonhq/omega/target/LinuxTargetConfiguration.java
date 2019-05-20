@@ -88,8 +88,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         return answer;
     }
 
-    public void compileApplication(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
-        super.compileApplication(gvmPath, classPath, mainClassName, appName, target);
+    public void compileApplication() throws Exception {
         System.err.println("Compiling application for Linux");
         SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
     }

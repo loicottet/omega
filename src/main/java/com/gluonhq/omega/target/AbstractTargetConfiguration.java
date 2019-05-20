@@ -43,16 +43,6 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
     String target;
     Path workDir;
 
-    public void compileApplication(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
-        this.gvmPath = gvmPath;
-        this.classPath = classPath;
-        this.mainClassName = mainClassName;
-        this.appName = appName;
-        this.target = target;
-    }
-
-    public abstract void compileAdditionalSources() throws Exception;
-
     private static final List<String> javaJNIClassList = Arrays.asList(
             "java.io.File",
             "java.lang.Boolean",
@@ -238,6 +228,10 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "_JNI_OnLoad_javafx_font"
     );
 
+    public abstract void compileApplication() throws Exception;
+
+    public abstract void compileAdditionalSources() throws Exception;
+
     public List<String> getJavaJNIClassList() {
         return javaJNIClassList;
     }
@@ -269,8 +263,13 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
 
     @Override
     public void compile(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
+        this.gvmPath = gvmPath;
+        this.classPath = classPath;
+        this.mainClassName = mainClassName;
+        this.appName = appName;
+        this.target = target;
         compileAdditionalSources();
-        compileApplication(gvmPath, classPath, mainClassName, appName, target);
+        compileApplication();
     }
 
     @Override

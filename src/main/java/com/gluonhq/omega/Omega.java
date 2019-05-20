@@ -123,6 +123,28 @@ public class Omega {
     }
 
     /**
+     * Returns the target name based on the configuration.
+     * @param config the required configuration
+     * @return
+     */
+    public static String getTarget(Config config) {
+        String target = "";
+        if ("host".equals(config.getTarget())) {
+            String osname = System.getProperty("os.name");
+            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
+                target = "linux";
+            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
+                target = "macosx";
+            }
+        } else if ("ios".equals(Omega.config.getTarget()) || "ios-sim".equals(config.getTarget())) {
+            target = "ios";
+        } else {
+            throw new RuntimeException("No valid target: " + config.getTarget());
+        }
+        return target;
+    }
+
+    /**
      * Returns the list of runtime arguments
      * @return a list of runtime arguments
      */
@@ -244,20 +266,4 @@ public class Omega {
         return config;
     }
 
-    public static  String getTarget(Config myconfig) {
-        String target = "";
-        if (myconfig.getTarget().equals("host")) {
-            String osname = System.getProperty("os.name");
-            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-                target = "linux";
-            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-                target = "macosx";
-            }
-        } else if (config.getTarget().equals("ios") || myconfig.getTarget().equals("ios-sim")) {
-            target = "ios";
-        } else {
-            throw new RuntimeException("No valid target: " + myconfig.getTarget());
-        }
-        return target;
-    }
 }
