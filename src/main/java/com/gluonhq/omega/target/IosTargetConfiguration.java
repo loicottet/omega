@@ -313,7 +313,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
-        linkBuilder.command().add("-L" + SVMBridge.OMEGADEPSROOT + "/darwin-amd64");
+        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/darwin-amd64");
 //        linkBuilder.command().add("-L" + gvmPath.toString() + "/staticlibs");
         linkBuilder.command().addAll(ioslibs);
 

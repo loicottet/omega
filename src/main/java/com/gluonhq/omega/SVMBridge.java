@@ -50,8 +50,9 @@ import java.util.stream.Stream;
 
 public class SVMBridge {
 
-    public static String OMEGADEPSROOT;
+    public static String GRAALSDK;
     public static String JFXSDK;
+    public static String JAVASDK;
     public static boolean USE_JAVAFX;
     private static boolean USE_LLVM;
 
@@ -79,7 +80,17 @@ public class SVMBridge {
 
     private static void init() {
         Config omegaConfig = Omega.getConfig();
-        SVMBridge.OMEGADEPSROOT = omegaConfig.getDepsRoot();
+        String target = Omega.getTarget(omegaConfig);
+        Path graallibs = FileDeps.USER_OMEGA_PATH
+                .resolve("graalLibs")
+                .resolve(omegaConfig.getGraalLibsVersion())
+                .resolve("lib");
+        Path javalibs = FileDeps.USER_OMEGA_PATH
+                .resolve("javaStaticSdk")
+                .resolve(omegaConfig.getJavaStaticSdkVersion())
+                .resolve(target + "-libs-" + omegaConfig.getJavaStaticSdkVersion());
+        SVMBridge.GRAALSDK = graallibs.toAbsolutePath().toString();
+        SVMBridge.JAVASDK = javalibs.toAbsolutePath().toString();
         SVMBridge.USE_JAVAFX = omegaConfig.isUseJavaFX();
         SVMBridge.USE_LLVM = "llvm".equals(omegaConfig.getBackend());
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
@@ -90,7 +101,6 @@ public class SVMBridge {
         // LIBS
         try {
             FileDeps.setupDependencies(omegaConfig);
-            FileDeps.copyDependencies(omegaConfig);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -264,19 +274,19 @@ public class SVMBridge {
     private static List<Path> getBuilderClasspath() {
         List<Path> answer = new LinkedList<>();
 //        if (useJavaModules()) { // TODO
-            answer.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "graal.jar"));
+            answer.add(Paths.get(GRAALSDK, "jvmci/graal-sdk.jar"));
+            answer.add(Paths.get(GRAALSDK, "jvmci/graal.jar"));
 //        }
-        answer.add(Paths.get(OMEGADEPSROOT, "svm.jar"));
-        answer.add(Paths.get(OMEGADEPSROOT, "objectfile.jar"));
-        answer.add(Paths.get(OMEGADEPSROOT, "pointsto.jar"));
+        answer.add(Paths.get(GRAALSDK, "svm/builder/svm.jar"));
+        answer.add(Paths.get(GRAALSDK, "svm/builder/objectfile.jar"));
+        answer.add(Paths.get(GRAALSDK, "svm/builder/pointsto.jar"));
 
         if (USE_LLVM) {
-            answer.add(Paths.get(OMEGADEPSROOT, "svm-llvm.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "graal-llvm.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "llvm-platform-specific.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "llvm-wrapper.jar"));
-            answer.add(Paths.get(OMEGADEPSROOT, "javacpp.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/svm-llvm.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/graal-llvm.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builer/llvm-platform-specific.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-wrapper.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/javacpp.jar"));
         }
         return answer;
     }
@@ -289,8 +299,8 @@ public class SVMBridge {
 
     private static List<Path> getBuilderModulePath() {
         List<Path> paths = new ArrayList<>();
-        paths.add(Paths.get(OMEGADEPSROOT, "graal-sdk.jar"));
-        paths.add(Paths.get(OMEGADEPSROOT,"truffle-api.jar"));
+        paths.add(Paths.get(GRAALSDK, "jvmci/graal-sdk.jar"));
+        paths.add(Paths.get(GRAALSDK,"truffle/truffle-api.jar"));
         return paths;
     }
 
@@ -301,11 +311,13 @@ public class SVMBridge {
     }
 
     private static List<Path> getBuilderUpgradeModulePath() {
-        return Arrays.asList(Paths.get(OMEGADEPSROOT,"graal.jar"));
+        return Arrays.asList(Paths.get(GRAALSDK,"jvmci/graal.jar"));
     }
 
     private static void setRuntimeArgs(String suffix) {
-        String cp = classDir.stream()
+        String cp = getBuilderClasspath().stream().map(Path::toString)
+                .collect(Collectors.joining(File.pathSeparator));
+        cp = cp +  File.pathSeparator  + classDir.stream()
                 .map(Path::toString)
                 .filter(s -> !s.contains("javafx-"))
                 .collect(Collectors.joining(File.pathSeparator));
@@ -328,7 +340,6 @@ public class SVMBridge {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         String hostedNative = Omega.macHost ?
                 "darwin-amd64" :
                 "linux-amd64";
@@ -336,7 +347,7 @@ public class SVMBridge {
         runtimeArgs = new ArrayList<>(Arrays.asList(
                 "-imagecp", cp,
                 "-H:Path=" + workDir,
-                "-H:CLibraryPath=" + Paths.get(OMEGADEPSROOT).resolve(hostedNative).toFile().getAbsolutePath(),
+                "-H:CLibraryPath=" + Paths.get(GRAALSDK).resolve("svm/clibraries/"+hostedNative).toFile().getAbsolutePath(),
                 "-H:Class=" + mainClass,
                 "-H:+ReportExceptionStackTraces",
                 "-H:ReflectionConfigurationFiles=" + workDir + "/reflectionconfig-" + suffix + ".json"

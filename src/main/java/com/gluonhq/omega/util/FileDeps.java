@@ -83,23 +83,11 @@ public class FileDeps {
             "libglass.a"
     );
 
-    private static final Path USER_OMEGA_PATH = Path.of(System.getProperty("user.home"))
+    public static final Path USER_OMEGA_PATH = Path.of(System.getProperty("user.home"))
             .resolve(".gluon").resolve("omega");
 
     public static void setupDependencies(Config config) throws IOException {
-        String target = "";
-        if (config.getTarget().equals("host")) {
-            String osname = System.getProperty("os.name");
-            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-                target = "linux";
-            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-                target = "macosx";
-            }
-        } else if (config.getTarget().equals("ios") || config.getTarget().equals("ios-sim")) {
-            target = "ios";
-        } else {
-            throw new RuntimeException("No valid target: " + config.getTarget());
-        }
+        String target = Omega.getTarget(config);
 
         boolean downloadGraalLibs = false, downloadJavaStatic = false, downloadJavaFXStatic = false;
 
@@ -224,106 +212,6 @@ public class FileDeps {
                 .resolve(target + "-sdk").toString());
 
         LOGGER.info("Setup dependencies done");
-    }
-
-    public static void copyDependencies(Config config) throws IOException {
-        LOGGER.info("Copy graalLibs");
-        Path graallibs = USER_OMEGA_PATH
-                .resolve("graalLibs")
-                .resolve(config.getGraalLibsVersion())
-                .resolve("lib");
-        Path output = Path.of(config.getDepsRoot());
-        try {
-            Files.createDirectories(output);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LOGGER.info("Copying graalLibs to: " + output);
-        String path = graallibs.toString();
-        GRAAL_FILES.stream()
-                .map(s -> new File(path, s).toString())
-                .forEach(d -> {
-                    try {
-                        String[] split = d.split("/");
-                        String fileName = split[split.length - 1];
-                        Files.copy(Path.of(d), output.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-        try {
-            final Path dirLibs = graallibs.resolve("svm").resolve("clibraries");
-            Files.walkFileTree(dirLibs, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
-                    Files.createDirectories(output.resolve(dirLibs.relativize(dir)));
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-                    Files.copy(file, output.resolve(dirLibs.relativize(file)));
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LOGGER.info("Copying graalLibs done");
-
-        String hostedNative = "";
-        if (config.getTarget().equals("host")) {
-            String osname = System.getProperty("os.name");
-            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-                hostedNative = "linux-amd64";
-            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-                hostedNative = "darwin-amd64";
-            }
-        } else if (config.getTarget().equals("ios-sim")) {
-            hostedNative = "darwin-amd64";
-        } else if (config.getTarget().equals("ios")) {
-            hostedNative = "darwin-arm64";
-        } else {
-            throw new RuntimeException("No valid hostedNative: " + config.getTarget());
-        }
-
-        // merge Java and JavaFX static libraries with Graal's
-        Path staticlibs = Path.of(config.getDepsRoot(), hostedNative);
-
-        try {
-            Files.walk(Path.of(Omega.getConfig().getStaticRoot()))
-                    .filter(s -> s.toString().endsWith(".a"))
-                    .forEach(f -> {
-                        try {
-                            Path lib = staticlibs.resolve(f.getFileName());
-                            if (! Files.exists(lib)) {
-                                Files.copy(f, lib);
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-
-            if (config.isUseJavaFX()) {
-                Files.walk(Path.of(Omega.getConfig().getJavaFXRoot()))
-                        .filter(s -> s.toString().endsWith(".a"))
-                        .forEach(f -> {
-                            try {
-                                Path lib = staticlibs.resolve(f.getFileName());
-                                if (! Files.exists(lib)) {
-                                    Files.copy(f, lib);
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error copying static libraries");
-        }
-
-        LOGGER.info("Copying lib*.a done");
-
     }
 
     private static Map<String, String> getHashMap(String nameFile) {
