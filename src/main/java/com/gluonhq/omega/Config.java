@@ -41,7 +41,8 @@ public class Config {
 
     private String target;
     private String backend;
-    private List<String> bundles;
+    private List<String> bundlesList;
+    private List<String> resourcesList;
     private List<String> reflectionList;
     private List<String> jniList;
     private List<String> delayInitList;
@@ -149,16 +150,28 @@ public class Config {
         this.backend = backend;
     }
 
-    public List<String> getBundles() {
-        return bundles;
+    public List<String> getBundlesList() {
+        return bundlesList;
     }
 
     /**
-     * Sets additional lists
-     * @param bundles a list of classes that will be added to the default bundles list
+     * Sets additional bundles
+     * @param bundlesList a list of classes that will be added to the default bundlesList list
      */
-    public void setBundles(List<String> bundles) {
-        this.bundles = bundles;
+    public void setBundlesList(List<String> bundlesList) {
+        this.bundlesList = bundlesList;
+    }
+
+    /**
+     * Set additional resources to be included
+     * @param resourcesList a list of resource patterns that will be included
+     */
+    public void setResourcesList(List<String> resourcesList) {
+        this.resourcesList = resourcesList;
+    }
+
+    public List<String> getResourcesList() {
+        return resourcesList;
     }
 
     public List<String> getReflectionList() {

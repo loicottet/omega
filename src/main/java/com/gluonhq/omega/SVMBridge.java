@@ -78,6 +78,11 @@ public class SVMBridge {
             "com.sun.javafx.tk.quantum.QuantumMessagesBundle"
     ));
 
+    private static final List<String> resourcesList = Arrays.asList(
+            "frag", "fxml", "css", "gls", "ttf",
+            "png", "jpg", "jpeg", "gif", "bmp",
+            "license", "json");
+
     private static AbstractTargetConfiguration config;
 
     static void init() {
@@ -241,7 +246,7 @@ public class SVMBridge {
         compileBuilder.command().add("com.oracle.svm.hosted.NativeImageGeneratorRunner");
         List<String> runtimeArgs = Omega.getRuntimeArgs();
         List<String> bundles = getBundlesList();
-        bundles.addAll(Omega.getConfig().getBundles());
+        bundles.addAll(Omega.getConfig().getBundlesList());
         if (! bundles.isEmpty()) {
             runtimeArgs.add("-H:IncludeResourceBundles=" +
                     bundles.stream().collect(Collectors.joining(",")));
@@ -357,7 +362,7 @@ public class SVMBridge {
         runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
 
         if (config.isCrossCompile() || Omega.macHost) {
-            runtimeArgs.add("-H:+SharedLibrary");
+//            runtimeArgs.add("-H:+SharedLibrary");
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
         if (! CUSTOM_DELAY_INIT_LIST.isEmpty()) {
@@ -367,19 +372,13 @@ public class SVMBridge {
             runtimeArgs.add("-H:ClassInitialization=" + classes);
 
         }
+
+        runtimeArgs.addAll(getResources());
         runtimeArgs.addAll(Arrays.asList(
                 "-H:NumberOfThreads=1",
                 "-H:Name=" + appName,
-                "-H:IncludeResources=.*/.*frag$",
-                "-H:IncludeResources=.*/.*fxml$",
-                "-H:IncludeResources=.*/.*css$",
-                "-H:IncludeResources=.*/.*gls$",
-                "-H:IncludeResources=.*/.*ttf$",
-                "-H:IncludeResources=.*/.*png$",
-                "-H:IncludeResources=.*fxml$",
-                "-H:IncludeResources=.*png$",
-                "-H:IncludeResources=.*css$",
                 "-H:+ReportUnsupportedElementsAtRuntime",
+                "-H:+AddAllCharsets",
                 "-H:+AllowIncompleteClasspath" /*,
                 "-H:EnableURLProtocols=http,https" */));
 
@@ -388,6 +387,19 @@ public class SVMBridge {
             runtimeArgs.add("-H:-MultiThreaded");
             runtimeArgs.add("-H:-SpawnIsolates");
         }
+    }
+
+    private static List<String> getResources() {
+        List<String> resources = new ArrayList<>(resourcesList);
+        resources.addAll(Omega.getConfig().getResourcesList());
+
+        List<String> list = resources.stream()
+                .map(s -> "-H:IncludeResources=.*/.*" + s + "$")
+                .collect(Collectors.toList());
+        list.addAll(resources.stream()
+                .map(s -> "-H:IncludeResources=.*" + s + "$")
+                .collect(Collectors.toList()));
+        return list;
     }
 
     private static void createReflectionConfig(String suffix) throws Exception {
