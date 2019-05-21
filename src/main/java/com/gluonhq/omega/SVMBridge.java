@@ -360,7 +360,13 @@ public class SVMBridge {
             runtimeArgs.add("-H:Kind=SHARED_LIBRARY");
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
-        CUSTOM_DELAY_INIT_LIST.forEach(clinit -> runtimeArgs.add("-H:DelayClassInitialization=" + clinit));
+        if (! CUSTOM_DELAY_INIT_LIST.isEmpty()) {
+            String classes = CUSTOM_DELAY_INIT_LIST.stream()
+                    .map(s -> s + ":build_time")
+                    .collect(Collectors.joining(","));
+            runtimeArgs.add("-H:ClassInitialization=" + classes);
+
+        }
         runtimeArgs.addAll(Arrays.asList(
                 "-H:NumberOfThreads=1",
                 "-H:Name=" + appName,
