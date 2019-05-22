@@ -144,6 +144,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             "_Java_com_sun_glass_ui_mac_MacApplication__1unhideAllApplications",
             "_Java_com_sun_glass_ui_mac_MacApplication_staticScreen_1getScreens",
             "_Java_com_sun_glass_ui_mac_MacApplication_staticScreen_1getVideoRefreshPeriod",
+            "_Java_com_sun_glass_ui_mac_MacCommonDialogs__1initIDs",
             "_Java_com_sun_glass_ui_mac_MacCursor__1createCursor",
             "_Java_com_sun_glass_ui_mac_MacCursor__1getBestSize",
             "_Java_com_sun_glass_ui_mac_MacCursor__1initIDs",
