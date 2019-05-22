@@ -115,6 +115,8 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "javafx.scene.shape.PathElement",
             "javafx.scene.shape.Polygon",
             "javafx.scene.shape.Rectangle",
+            "javafx.scene.shape.QuadCurve",
+            "javafx.scene.shape.QuadCurveTo",
             "javafx.scene.shape.Shape",
             "javafx.scene.shape.SVGPath",
             "javafx.scene.shape.VLineTo",
