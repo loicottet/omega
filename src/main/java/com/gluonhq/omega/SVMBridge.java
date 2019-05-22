@@ -99,9 +99,8 @@ public class SVMBridge {
                 .resolve(target + "-libs-" + omegaConfig.getJavaStaticSdkVersion());
         omegaConfig.setStaticRoot(javalibs.toString());
         omegaConfig.setJavaFXRoot(USER_OMEGA_PATH.resolve("javafxStaticSdk")
-                .resolve(omegaConfig.getJavaStaticSdkVersion())
+                .resolve(omegaConfig.getJavafxStaticSdkVersion())
                 .resolve(target + "-sdk").toString());
-
         SVMBridge.GRAALSDK = graallibs.toString();
         SVMBridge.JAVASDK = javalibs.toString();
         SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
