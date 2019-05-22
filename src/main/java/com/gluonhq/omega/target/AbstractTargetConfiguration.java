@@ -45,6 +45,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
 
     private static final List<String> javaJNIClassList = Arrays.asList(
             "java.io.File",
+            "java.io.FileNotFoundException",
             "java.io.InputStream",
             "java.lang.Boolean",
             "java.lang.Class",
@@ -78,12 +79,14 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
 
     private static final List<String> javafxReflectionClassList = new ArrayList<>(Arrays.asList(
             "java.lang.Runnable",
+            "java.net.InetAddress",
             "javafx.scene.control.Control",
             "javafx.scene.layout.Pane",
             "javafx.scene.layout.Region",
             "javafx.scene.shape.Shape",
             "javafx.scene.transform.Transform",
             "javafx.scene.Camera",
+            "javafx.scene.Group",
             "javafx.scene.Node",
             "javafx.scene.Parent",
             "javafx.scene.Scene",
@@ -97,8 +100,13 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "javafx.scene.image.Image",
             "javafx.scene.image.ImageView",
             "javafx.scene.input.TouchPoint",
-            "javafx.scene.shape.Rectangle",
             "javafx.scene.shape.Circle",
+            "javafx.scene.shape.LineTo",
+            "javafx.scene.shape.MoveTo",
+            "javafx.scene.shape.Path",
+            "javafx.scene.shape.PathElement",
+            "javafx.scene.shape.Rectangle",
+            "javafx.scene.shape.SVGPath",
             "javafx.animation.KeyFrame",
             "javafx.animation.KeyValue",
             "com.sun.javafx.scene.control.skin.Utils",

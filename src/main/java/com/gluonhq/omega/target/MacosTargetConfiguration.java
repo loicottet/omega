@@ -315,14 +315,14 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     private static final List<String> macoslibsFX = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper",
             "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc", "-lj2pkcs11", "-lsunec",
             "-Wl,-framework,Foundation", "-Wl,-framework,AppKit",
             "-Wl,-framework,ApplicationServices", "-Wl,-framework,OpenGL",
             "-Wl,-framework,QuartzCore", "-Wl,-framework,Security");
 
     private static final List<String> macoslibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lobjc", "-lj2pkcs11", "-lsunec",
             "-Wl,-framework,Foundation", "-Wl,-framework,AppKit",
             "-Wl,-framework,ApplicationServices", "-Wl,-framework,OpenGL",
             "-Wl,-framework,QuartzCore", "-Wl,-framework,Security");

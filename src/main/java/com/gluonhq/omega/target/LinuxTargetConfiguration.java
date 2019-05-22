@@ -66,11 +66,11 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     private static final List<String> linuxlibsFX = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
             "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec");
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec");
 
     @Override
     public List<String> getJavaFXJNIClassList() {

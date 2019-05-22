@@ -361,7 +361,7 @@ public class SVMBridge {
         runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
 
         if (config.isCrossCompile() || Omega.macHost) {
-//            runtimeArgs.add("-H:+SharedLibrary");
+            runtimeArgs.add("-H:+SharedLibrary");
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
         if (! CUSTOM_DELAY_INIT_LIST.isEmpty()) {
@@ -378,8 +378,8 @@ public class SVMBridge {
                 "-H:Name=" + appName,
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+AddAllCharsets",
-                "-H:+AllowIncompleteClasspath" /*,
-                "-H:EnableURLProtocols=http,https" */));
+                "-H:+AllowIncompleteClasspath",
+                "-H:EnableURLProtocols=http,https"));
 
         if (USE_LLVM) {
             runtimeArgs.add("-H:CompilerBackend=llvm");
