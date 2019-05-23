@@ -29,7 +29,8 @@
 
 int startGVM();
 
-extern void *JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b();
+// extern void *JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b();
+extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e();
 
 @interface AppDelegate ()
 
@@ -81,7 +82,7 @@ extern void *JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b();
 
 int startGVM() {
     int ret;
-    fprintf(stderr, "Starting GVM\n");
+    fprintf(stderr, "Starting GVM for ios\n");
 /*
     fprintf(stderr, "Starting GVM, create isolatehread\n");
     graal_create_isolate_params_t isolate_params;
@@ -92,7 +93,9 @@ int startGVM() {
         fprintf(stderr, "Whoops, can't create isolate\n");
     }
 
-    (*JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b)(1);
+// (*JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b)(1);
+    (*IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e)(1);
+
 */
 
     fprintf(stderr, "And now we would launch Java.\n");

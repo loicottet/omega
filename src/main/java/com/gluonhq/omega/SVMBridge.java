@@ -91,6 +91,7 @@ public class SVMBridge {
         Path graallibs = USER_OMEGA_PATH
                 .resolve("graalLibs")
                 .resolve(omegaConfig.getGraalLibsVersion())
+                .resolve("bundle")
                 .resolve("lib");
         omegaConfig.setDepsRoot(graallibs.toString());
         Path javalibs = USER_OMEGA_PATH

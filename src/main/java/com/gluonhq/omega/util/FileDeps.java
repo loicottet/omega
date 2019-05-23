@@ -58,7 +58,7 @@ public class FileDeps {
 
     private static final boolean SKIP_HASH = true;
 
-    private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graallibs-${version}.zip";
+    private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${version}.zip";
     private static final String URL_JAVA_STATIC_SDK = "http://download2.gluonhq.com/omega/javastaticsdk/${target}-libs-${version}.zip";
     private static final String URL_JAVAFX_STATIC_SDK = "http://download2.gluonhq.com/omega/javafxstaticsdk/${target}-libsfx-${version}.zip";
 
