@@ -181,16 +181,19 @@ public class SVMBridge {
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
 
-        if (Omega.macHost) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
-        } else if (Omega.linux) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
-        } else if (configuration.isCrossCompile()) {
+        if (configuration.isCrossCompile()) {
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
             linkedList.add("-Dsvm.targetArch=arm");
+        } else if (Omega.macHost) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_AMD64");
+        } else if (Omega.linux) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
         } else {
             // TODO: Set platform for iOS, sim
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_ARM64");
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AMD64");
+        }
+        if (USE_LLVM) {
+            linkedList.add("-Dsvm.llvm.root=/Users/loicottet/Projects/graal/llclib/");
         }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
@@ -202,6 +205,8 @@ public class SVMBridge {
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.amd64=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.aarch64=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED");
         linkedList.add("--add-exports");
@@ -293,7 +298,7 @@ public class SVMBridge {
         if (USE_LLVM) {
             answer.add(Paths.get(GRAALSDK, "svm/builder/svm-llvm.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/graal-llvm.jar"));
-            answer.add(Paths.get(GRAALSDK, "svm/builer/llvm-platform-specific.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-platform-specific.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-wrapper.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/javacpp.jar"));
         }

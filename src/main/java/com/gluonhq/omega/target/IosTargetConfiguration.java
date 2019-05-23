@@ -219,6 +219,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
+        setupArch(target);
         libPath = this.gvmPath.resolve("lib");
         Files.createDirectories(libPath);
         System.err.println("Extracting native libs to: " + libPath);
