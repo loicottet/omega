@@ -69,6 +69,8 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             "com.sun.glass.ui.mac.MacPlatformFactory",
             "com.sun.glass.ui.mac.MacGestureSupport",
             "com.sun.glass.ui.mac.MacMenuBarDelegate",
+            "com.sun.glass.ui.mac.MacCommonDialogs",
+            "com.sun.glass.ui.mac.MacFileNSURL",
             "com.sun.javafx.font.coretext.CTFactory"
     );
 
@@ -145,6 +147,15 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             "_Java_com_sun_glass_ui_mac_MacApplication_staticScreen_1getScreens",
             "_Java_com_sun_glass_ui_mac_MacApplication_staticScreen_1getVideoRefreshPeriod",
             "_Java_com_sun_glass_ui_mac_MacCommonDialogs__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacCommonDialogs__1showFileOpenChooser",
+            "_Java_com_sun_glass_ui_mac_MacCommonDialogs__1showFileSaveChooser",
+            "_Java_com_sun_glass_ui_mac_MacCommonDialogs__1showFolderChooser",
+            "_Java_com_sun_glass_ui_mac_MacFileNSURL__1initIDs",
+            "_Java_com_sun_glass_ui_mac_MacFileNSURL__1dispose",
+            "_Java_com_sun_glass_ui_mac_MacFileNSURL__1startAccessingSecurityScopedResource",
+            "_Java_com_sun_glass_ui_mac_MacFileNSURL__1stopAccessingSecurityScopedResource",
+            "_Java_com_sun_glass_ui_mac_MacFileNSURL__1getBookmark",
+            "_Java_com_sun_glass_ui_mac_MacFileNSURL__1createFromBookmark",
             "_Java_com_sun_glass_ui_mac_MacCursor__1createCursor",
             "_Java_com_sun_glass_ui_mac_MacCursor__1getBestSize",
             "_Java_com_sun_glass_ui_mac_MacCursor__1initIDs",

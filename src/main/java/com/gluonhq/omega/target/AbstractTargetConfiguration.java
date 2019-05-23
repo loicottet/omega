@@ -56,6 +56,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "java.lang.Runnable",
             "java.lang.String",
             "java.lang.Thread",
+            "java.net.SocketTimeoutException",
             "java.nio.ByteBuffer",
             "java.nio.charset.Charset",
             "java.util.ArrayList",
@@ -75,7 +76,9 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.glass.ui.Size",
             "com.sun.glass.ui.View",
             "com.sun.glass.ui.Window",
-            "com.sun.javafx.geom.Path2D");
+            "com.sun.javafx.geom.Path2D",
+            "com.sun.glass.ui.CommonDialogs$ExtensionFilter",
+            "com.sun.glass.ui.CommonDialogs$FileChooserResult");
 
     private static final List<String> javafxReflectionClassList = new ArrayList<>(Arrays.asList(
             "java.lang.Runnable",
@@ -236,6 +239,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.scenario.effect.impl.prism.ps.PPSLinearConvolvePeer",
             "com.sun.scenario.effect.impl.prism.ps.PPSLinearConvolveShadowPeer",
             "com.sun.xml.internal.stream.XMLInputFactoryImpl",
+            "com.sun.glass.ui.EventLoop",
             "com.sun.glass.ui.Application",
             "com.sun.glass.ui.View",
             "com.sun.glass.ui.Size"
