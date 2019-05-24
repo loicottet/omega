@@ -58,7 +58,7 @@ public class FileDeps {
 
     private static final boolean SKIP_HASH = true;
 
-    private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${version}.zip";
+    private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${target}-${version}.zip";
     private static final String URL_JAVA_STATIC_SDK = "http://download2.gluonhq.com/omega/javastaticsdk/${target}-libs-${version}.zip";
     private static final String URL_JAVAFX_STATIC_SDK = "http://download2.gluonhq.com/omega/javafxstaticsdk/${target}-libsfx-${version}.zip";
 
@@ -219,7 +219,9 @@ public class FileDeps {
 
     private static void downloadGraalZip(Path omegaPath, Config config) throws IOException {
         LOGGER.info("Process zip graalLibs");
-        processZip(URL_GRAAL_LIBS.replace("${version}", config.getGraalLibsVersion()),
+        processZip(URL_GRAAL_LIBS
+                        .replace("${target}", Omega.getTarget(config))
+                        .replace("${version}", config.getGraalLibsVersion()),
                 omegaPath.resolve("graallibs-${version}.zip".replace("${version}", config.getGraalLibsVersion())),
                 "graalLibs", config.getGraalLibsVersion());
         LOGGER.info("Processing zip graalLibs done");
