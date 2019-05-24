@@ -27,10 +27,20 @@
  */
 package com.gluonhq.omega.target;
 
+import com.dd.plist.NSArray;
+import com.dd.plist.NSDictionary;
+import com.dd.plist.NSString;
+import com.dd.plist.PropertyListParser;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
+import com.gluonhq.omega.util.NSDictionaryEx;
+import com.gluonhq.omega.util.ProcessArgs;
+import com.gluonhq.omega.util.XcodeUtil;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -339,6 +349,23 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             "-Wl,-framework,ApplicationServices", "-Wl,-framework,OpenGL",
             "-Wl,-framework,QuartzCore", "-Wl,-framework,Security");
 
+    private static final List<String> assets = new ArrayList<>(Arrays.asList(
+            "Contents.json", "Gluon-icon-16@1x.png", "Gluon-icon-16@2x.png", "Gluon-icon-32@1x.png",
+            "Gluon-icon-32@2x.png", "Gluon-icon-128@1x.png", "Gluon-icon-128@2x.png",
+            "Gluon-icon-256@1x.png", "Gluon-icon-256@2x.png", "Gluon-icon-512@1x.png", "Gluon-icon-512@2x.png"
+    ));
+
+    private String minOSVersion = "10.14";
+
+    public MacosTargetConfiguration(Path macDir) {
+        this.rootPath = macDir;
+        try {
+            Files.createDirectories(macDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public List<String> getJavaFXJNIClassList() {
         ArrayList<String> answer = new ArrayList<>();
@@ -413,7 +440,9 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
         logDebug("Linking at " + workDir.toString());
         Path gvmPath = workDir.getParent();
-        Path mac = workDir.getParent().getParent().resolve("mac").resolve(appName);
+        appPath = gvmPath.getParent().resolve("mac").resolve(appName + ".app");
+        Files.createDirectories(appPath.resolve("Contents").resolve("MacOS"));
+        tmpPath = workDir;
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
         linkBuilder.command().add("-ObjC");
         linkBuilder.command().add("-isysroot");
@@ -422,10 +451,10 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add("-arch");
         linkBuilder.command().add("x86_64");
         linkBuilder.command().add("-o");
-        linkBuilder.command().add(mac.toString() + "/" + appName);
+        linkBuilder.command().add(appPath.resolve("Contents").resolve("MacOS").resolve(appName).toString());
         linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
-        linkBuilder.command().add(mac.toString() + "/AppDelegate.o");
-        linkBuilder.command().add(mac.toString() + "/launcher.o");
+        linkBuilder.command().add(gvmPath.getParent().resolve("mac").resolve(appName).toString() + "/AppDelegate.o");
+        linkBuilder.command().add(gvmPath.getParent().resolve("mac").resolve(appName).toString() + "/launcher.o");
 
         linkBuilder.command().add(o.toString());
         // LLVM
@@ -453,6 +482,14 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         if (result != 0) {
             throw new RuntimeException("Error linking");
         }
+
+        // plist
+        xcodeUtil = new XcodeUtil(SdkDirType.MACOSX.getSDKPath());
+
+        processInfoPlist();
+        FileOps.copyStream(new FileInputStream(rootPath.resolve("PkgInfo").toFile()),
+                appPath.resolve("Contents").resolve("PkgInfo"));
+
     }
 
     @Override
@@ -460,13 +497,102 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         super.run(workDir, appName, target);
 
         logDebug("Running at " + workDir.toString());
-        Path mac = workDir.resolve("mac").resolve(appName);
-        ProcessBuilder runBuilder = new ProcessBuilder(mac.toString() + "/" + appName);
+        Path mac = workDir.resolve("mac").resolve(appName + ".app").resolve("Contents").resolve("MacOS").resolve(appName);
+        ProcessBuilder runBuilder = new ProcessBuilder(mac.toString());
         runBuilder.redirectErrorStream(true);
         runBuilder.directory(workDir.toFile());
         Process start = runBuilder.start();
 
         FileOps.mergeProcessOutput(start.getInputStream());
         start.waitFor();
+    }
+
+    private void processInfoPlist() throws IOException {
+        Path plist = rootPath.resolve("Info.plist");
+        boolean inited = true;
+        if (! plist.toFile().exists()) {
+            logDebug("Copy Info.plist to " + plist.toString());
+            FileOps.copyResource("/native/macosx/assets/Info.plist", plist);
+            FileOps.copyResource("/native/macosx/assets/PkgInfo",
+                    rootPath.resolve("PkgInfo"));
+            assets.forEach(a -> FileOps.copyResource("/native/macosx/assets/Assets.xcassets/AppIcon.appiconset/" + a,
+                    rootPath.resolve("assets").resolve("Assets.xcassets").resolve("AppIcon.appiconset").resolve(a)));
+            FileOps.copyResource("/native/macosx/assets/Assets.xcassets/Contents.json",
+                    rootPath.resolve("assets").resolve("Assets.xcassets").resolve("Contents.json"));
+            inited = false;
+        }
+        copyAssets();
+
+        try {
+            NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
+            if (!inited) {
+                // ModuleName not supported
+                String className = Omega.getConfig().getMainClassName();
+                if (className.contains("/")) {
+                    className = className.substring(className.indexOf("/") + 1);
+                }
+                dict.put("CFBundleIdentifier", className);
+                dict.put("CFBundleExecutable", Omega.getConfig().getAppName());
+                dict.put("CFBundleName", Omega.getConfig().getAppName());
+                dict.saveAsXML(plist);
+            }
+            dict.put("DTSDKName", xcodeUtil.getSDKName());
+            dict.put("DTPlatformVersion", xcodeUtil.getPlatformVersion());
+            dict.put("DTPlatformBuild", xcodeUtil.getPlatformBuild());
+            dict.put("DTSDKBuild", xcodeUtil.getPlatformBuild());
+            dict.put("DTXcode", xcodeUtil.getDTXCode());
+            dict.put("DTXcodeBuild", xcodeUtil.getDTXCodeBuild());
+            NSDictionaryEx orderedDict = new NSDictionaryEx();
+            orderedDict.put("CFBundleVersion", dict.get("CFBundleVersion"));
+            dict.remove("CFBundleVersion");
+            dict.getKeySet().forEach(k -> orderedDict.put(k, dict.get(k)));
+
+            if (partialPListDir != null) {
+                Files.walk(partialPListDir)
+                        .filter(f -> f.toString().endsWith(".plist"))
+                        .forEach(f -> {
+                            try {
+                                NSDictionary d = (NSDictionary) PropertyListParser.parse(f.toFile());
+                                d.keySet().forEach(k -> orderedDict.put(k, d.get(k)));
+                            } catch (Exception e) {
+                                logSevere(e, "Error reading plist");
+                            }
+                        });
+            }
+            orderedDict.saveAsXML(appPath.resolve("Contents").resolve("Info.plist"));
+            orderedDict.getEntrySet().stream()
+                    .filter(e -> "CFBundleIdentifier".equals(e.getKey()))
+                    .findFirst()
+                    .ifPresent(e -> {
+                            logDebug("BUNDLE ID = " + e.getValue().toString());
+                            bundleId = e.getValue().toString();
+                    });
+        } catch (Exception ex) {
+            logSevere(ex, "Could not process property list");
+        }
+    }
+
+    private void copyAssets() throws IOException {
+        Path resourcePath = rootPath.resolve("assets");
+        if (! resourcePath.toFile().exists()) {
+            return;
+        }
+        Files.walk(resourcePath, 1).forEach(p -> {
+            System.out.println("p = " + p);
+            if (Files.isDirectory(p)) {
+                if (p.toString().endsWith(".xcassets")) {
+                    try {
+                        logDebug("Calling actool for " + p.toString());
+                        actool(p, "macosx",
+                                minOSVersion, Arrays.asList("mac"), "Contents/Resources");
+                    } catch (Exception ex) {
+                        logSevere(ex, "actool failed for directory " + p);
+                    }
+                }
+            } else {
+                Path targetPath = appPath.resolve("Contents").resolve(resourcePath.relativize(p));
+                FileOps.copyFile(p, targetPath);
+            }
+        });
     }
 }

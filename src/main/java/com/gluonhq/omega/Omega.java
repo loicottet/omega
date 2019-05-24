@@ -260,7 +260,7 @@ public class Omega {
         if (target.startsWith("ios")) {
             config = new IosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("ios"));
         } else if (macHost) {
-            config = new MacosTargetConfiguration();
+            config = new MacosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("mac"));
         } else if (linux) {
             config = new LinuxTargetConfiguration();
         } else {

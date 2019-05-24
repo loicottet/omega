@@ -85,13 +85,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     private XcodeUtil xcodeUtil;
     private static String appId;
 
-    private Path rootPath;
-    private static Path tmpPath;
-    private static Path appPath;
     private static Path libPath;
-
-    private static Path partialPListDir;
-    private static String bundleId;
 
     private static ProvisioningProfile provisioningProfile = null;
     private static SigningIdentity signingIdentity = null;
@@ -1158,13 +1152,18 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if (! resourcePath.toFile().exists()) {
             return;
         }
+        if (minOSVersion == null) {
+            minOSVersion = "11.0";
+        }
         Files.walk(resourcePath, 1).forEach(p -> {
             if (Files.isDirectory(p)) {
                 if (p.toString().endsWith(".xcassets")) {
                     try {
                         logDebug("Calling actool for " + p.toString());
-                        actool(p);
-                    } catch (IOException ex) {
+                        actool(p, isSimulator() ? "iphonesimulator" :"iphoneos",
+                                minOSVersion,
+                                Arrays.asList("iphone", "ipad"), "");
+                    } catch (Exception ex) {
                         logSevere(ex, "Failed creating directory " + p);
                     }
                 }
@@ -1173,80 +1172,6 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                 FileOps.copyFile(p, targetPath);
             }
         });
-    }
-
-    private void actool(Path resourcePath) throws IOException {
-        List<String> opts = new ArrayList<>();
-        final String appIconSet = ".appiconset";
-        final String launchImage = ".launchimage";
-
-        File inDir = resourcePath.toFile();
-        File outDir = appPath.toFile();
-        Files.walk(resourcePath).forEach(p -> {
-            if (Files.isDirectory(p) && p.toString().endsWith(appIconSet)) {
-                String appIconSetName = p.getFileName().toString()
-                        .substring(0, p.getFileName().toString().length() - appIconSet.length());
-                opts.add("--app-icon");
-                opts.add(appIconSetName);
-            } else if (Files.isDirectory(p) && p.toString().endsWith(launchImage)) {
-                String launchImagesName = p.getFileName().toString()
-                        .substring(0, p.getFileName().toString().length() - launchImage.length());
-                opts.add("--launch-image");
-                opts.add(launchImagesName);
-            }
-        });
-
-        partialPListDir = tmpPath.resolve("partial-plists");
-        if (Files.exists(partialPListDir)) {
-            try {
-                Files.walk(partialPListDir).forEach(f -> f.toFile().delete());
-            } catch (IOException ex) {
-                logSevere("Error removing files from " + partialPListDir.toString() + ": " + ex);
-            }
-        }
-        try {
-            Files.createDirectories(partialPListDir);
-        } catch (IOException ex) {
-            logSevere("Error creating " + partialPListDir.toString() + ": " + ex);
-        }
-
-        File partialInfoPlist = File.createTempFile(resourcePath.getFileName().toString() + "_", ".plist", partialPListDir.toFile());
-
-        opts.add("--output-partial-info-plist");
-        opts.add(partialInfoPlist.toString());
-
-        opts.add("--platform");
-        if (isSimulator()) {
-            opts.add("iphonesimulator");
-        } else {
-            opts.add("iphoneos");
-        }
-
-        if (minOSVersion == null) {
-            minOSVersion = "11.0";
-        }
-
-        String actoolForSdk = XcodeUtil.getCommandForSdk("actool", "iphoneos");
-
-        ProcessArgs args = new ProcessArgs(actoolForSdk, "--output-format", "human-readable-text");
-        args.addAll(opts);
-        args.addAll("--minimum-deployment-target", minOSVersion, "--target-device", "iphone", "--target-device", "ipad",
-                "--compress-pngs", "--compile", outDir.toString(), inDir.toString());
-        ProcessBuilder pb = new ProcessBuilder(args.toList());
-
-        logDebug("PB = " + pb.toString());
-        logDebug("PBlist = " + pb.command());
-        StringBuilder sb = new StringBuilder();
-        pb.command().forEach(a -> sb.append(a).append(" "));
-        logDebug("command to actool: " + sb);
-        pb.redirectErrorStream(true);
-
-        Process p = pb.start();
-        try {
-            p.waitFor();
-        } catch (InterruptedException ex) {
-            logSevere("Error running actool: " + ex);
-        }
     }
 
     boolean lipoMatch(Path path) throws IOException {

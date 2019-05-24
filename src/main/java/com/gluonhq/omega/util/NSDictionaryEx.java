@@ -126,7 +126,11 @@ public class NSDictionaryEx {
     }
 
     public String getString( String key ) {
-        return ((NSString) dict.objectForKey(key)).toString();
+        NSString nsString = (NSString) dict.objectForKey(key);
+        if (nsString != null) {
+            return nsString.toString();
+        }
+        return "";
     }
 
     public LocalDate getDate(String key ) {
