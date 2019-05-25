@@ -135,7 +135,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
             List<ProvisioningProfile> collect = Files.walk(dir)
                     .filter(f -> f.toFile().getName().endsWith(".mobileprovision"))
                     .map(ProvisioningProfile::create)
-                    .filter(p -> p.expirationDate.isAfter(now))
+                    .filter(p -> ! p.expirationDate.isBefore(now))
                     .sorted()
                     .collect(Collectors.toList());
 //            System.out.println("PROVISIONINGLIST = "+collect);

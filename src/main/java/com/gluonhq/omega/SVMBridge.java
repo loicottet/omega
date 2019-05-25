@@ -182,13 +182,20 @@ public class SVMBridge {
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
 
-        if (Omega.macHost) {
+        if (configuration.isCrossCompile()) {
+            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
+            linkedList.add("-Dsvm.targetArch=arm");
+        } else if (Omega.macHost) {
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
         } else if (Omega.linux) {
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
         } else {
-            // TODO: Set platform for iOS, sim
+            // Set platform for iOS sim
             linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_ARM64");
+        }
+        if (USE_LLVM) {
+            // TODO: Set correct path for this library
+            linkedList.add("-Dsvm.llvm.root=" + Omega.getConfig().getStaticRoot() + "/llclib");
         }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
@@ -200,6 +207,8 @@ public class SVMBridge {
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.amd64=ALL-UNNAMED");
+        linkedList.add("--add-exports");
+        linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.aarch64=ALL-UNNAMED");
         linkedList.add("--add-exports");
         linkedList.add("jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED");
         linkedList.add("--add-exports");
@@ -291,7 +300,7 @@ public class SVMBridge {
         if (USE_LLVM) {
             answer.add(Paths.get(GRAALSDK, "svm/builder/svm-llvm.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/graal-llvm.jar"));
-            answer.add(Paths.get(GRAALSDK, "svm/builer/llvm-platform-specific.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-platform-specific.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-wrapper.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/javacpp.jar"));
         }
@@ -347,7 +356,9 @@ public class SVMBridge {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // TODO: Include arm64 in cLibraries
         String hostedNative = Omega.macHost ?
+//                (config.isCrossCompile() ? "darwin-arm64" : "darwin-amd64")  :
                 "darwin-amd64" :
                 "linux-amd64";
 
@@ -375,7 +386,6 @@ public class SVMBridge {
 
         runtimeArgs.addAll(getResources());
         runtimeArgs.addAll(Arrays.asList(
-                "-H:NumberOfThreads=1",
                 "-H:Name=" + appName,
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+AddAllCharsets",
@@ -384,8 +394,10 @@ public class SVMBridge {
 
         if (USE_LLVM) {
             runtimeArgs.add("-H:CompilerBackend=llvm");
-            runtimeArgs.add("-H:-MultiThreaded");
+            runtimeArgs.add("-H:-AOTInline");
             runtimeArgs.add("-H:-SpawnIsolates");
+            runtimeArgs.add("-H:+RuntimeAssertions");
+            runtimeArgs.add("-H:DumpLLVMStackMap=" + workDir + "stackmap.txt");
         }
     }
 

@@ -130,9 +130,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
     private static final List<String> releaseSymbolsIOSList = Arrays.asList(
             "_JNI_OnLoad*",
-            "_Java_com_sun*",
+            "_Java_com_sun*"
+    );
+
+    private static final List<String> releaseSymbolsFXIOSList = Arrays.asList(
             "_Java_com_gluonhq*"
-            );
+    );
 
     private static final List<String> ioslibs = Arrays.asList(
             "-lffi", "-lpthread","-lz", "-lstrictmath", "-llibchelper",
@@ -182,9 +185,10 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     @Override
     public List<String> getReleaseSymbolsList() {
         ArrayList<String> answer = new ArrayList<>();
-        answer.addAll(super.getReleaseSymbolsList());
+//        answer.addAll(super.getReleaseSymbolsList());
+        answer.addAll(releaseSymbolsIOSList);
         if (USE_JAVAFX) {
-            answer.addAll(releaseSymbolsIOSList);
+            answer.addAll(releaseSymbolsFXIOSList);
         }
         return answer;
     }
@@ -213,6 +217,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
+        setupArch(target);
         libPath = this.gvmPath.resolve("lib");
         Files.createDirectories(libPath);
         System.err.println("Extracting native libs to: " + libPath);
@@ -280,7 +285,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add("-o");
         linkBuilder.command().add(appPath.toString() + "/" + appName + "App");
         linkBuilder.command().add("-Wl,-no_implicit_dylibs");
-        linkBuilder.command().add("-Wl,-dead_strip");
+        if (!"llvm".equals(Omega.getConfig().getBackend())) {
+            linkBuilder.command().add("-Wl,-dead_strip");
+        }
         linkBuilder.command().add("-fPIC");
         linkBuilder.command().add("-isysroot");
         linkBuilder.command().add(isSimulator() ? SdkDirType.IPHONE_SIM.getSDKPath() : SdkDirType.IPHONE_DEV.getSDKPath());
@@ -308,7 +315,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
-        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/darwin-amd64");
+        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + "darwin-amd64");
+        // TODO: Use arm
+//        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + (isSimulator() ? "darwin-amd64" : "darwin-arm64"));
         linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
         if (USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");

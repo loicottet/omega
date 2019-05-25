@@ -36,6 +36,7 @@
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"
 #include <dirent.h>
+#include <sys/stat.h>
 
 int main(int argc, char * argv[]) {
     @autoreleasepool {
@@ -122,4 +123,49 @@ DIR* opendir$INODE64(const char* dirname) {
 
     fprintf(stderr, "[JVDBG] opendir asked\n");
     return opendir(dirname);
+}
+
+int stat$INODE64(const char *pathname, struct stat *statbuf) {
+    NSLog(@"%@", [NSThread callStackSymbols]);
+
+    fprintf(stderr, "[JVDBG] stat asked\n");
+    return stat(pathname, statbuf);
+}
+
+int fstat$INODE64(int fd, struct stat *statbuf) {
+    NSLog(@"%@", [NSThread callStackSymbols]);
+
+    fprintf(stderr, "[JVDBG] fstat asked\n");
+    return fstat(fd, statbuf);
+}
+
+int lstat$INODE64(const char *pathname, struct stat *statbuf) {
+    NSLog(@"%@", [NSThread callStackSymbols]);
+
+    fprintf(stderr, "[JVDBG] lstat asked\n");
+    return lstat(pathname, statbuf);
+}
+
+void StrictMath_log() {
+    fprintf(stderr, "STRICTMATHLOG NYI\n");
+}
+
+void StrictMath_pow() {
+    fprintf(stderr, "STRICTMATHPOW NYI\n");
+}
+
+void sys_param_howmany() {
+    fprintf(stderr, "sys_param_howmany NYI\n");
+}
+
+void sys_select_FD_SET() {
+    fprintf(stderr, "sys_select_FD_SET NYI\n");
+}
+
+void sys_select_FD_ZERO() {
+    fprintf(stderr, "sys_select_FD_ZERO NYI\n");
+}
+
+void getEnviron() {
+    fprintf(stderr, "getEnviron NYI\n");
 }

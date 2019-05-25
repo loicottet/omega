@@ -246,7 +246,7 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
     ));
 
     private static final List<String> releaseSymbolsList = Arrays.asList(
-            "_Java_java_io_UnixFileSystem_canonicalize0",
+//            "_Java_java_io_UnixFileSystem_canonicalize0",
             "_Java_jdk_internal_misc_VM_getNanoTimeAdjustment");
 
     private static final List<String> releaseSymbolsFXList = Arrays.asList(

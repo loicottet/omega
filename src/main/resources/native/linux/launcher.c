@@ -27,9 +27,9 @@
  */
 #include <stdio.h>
 
-extern void *JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b();
+extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e();
 
 int main() {
     fprintf(stderr, "Main\n");
-    (*JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b)(1);
+    (*IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e)(1);
 }
