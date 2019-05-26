@@ -137,7 +137,6 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
         linkBuilder.command().add("-o");
         linkBuilder.command().add(linux.toString() + "/" + appName);
-        linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
         linkBuilder.command().add(linux.toString() + "/launcher.o");
         linkBuilder.command().add(linux.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
