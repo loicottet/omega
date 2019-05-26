@@ -34,7 +34,8 @@ public class Config {
     private String graalLibsVersion;
     private String javaStaticSdkVersion;
     private String javafxStaticSdkVersion;
-    private String depsRoot;
+    private String graalLibsRoot;
+    private String graalLibsUserPath;
     private String JavaFXRoot;
     private String StaticRoot;
     private boolean useJavaFX = true;
@@ -90,16 +91,30 @@ public class Config {
         this.javafxStaticSdkVersion = javafxStaticSdkVersion;
     }
 
-    public String getDepsRoot() {
-        return depsRoot;
+    public String getGraalLibsRoot() {
+        return graalLibsRoot;
     }
 
     /**
      * Sets the omega dependencies directory
-     * @param depsRoot the omega dependencies directory (e.g build/omega/deps/1.0.0)
+     * @param graalLibsRoot the omega dependencies directory
+     *                      (e.g ~/.gluon/omega/graalLibs/20-ea/bundle/lib)
      */
-    public void setDepsRoot(String depsRoot) {
-        this.depsRoot = depsRoot;
+    public void setGraalLibsRoot(String graalLibsRoot) {
+        this.graalLibsRoot = graalLibsRoot;
+    }
+
+    public String getGraalLibsUserPath() {
+        return graalLibsUserPath;
+    }
+
+    /**
+     * Sets the omega dependencies directory set by the user
+     * @param graalLibsUserPath the omega dependencies directory
+     *                          (e.g $user/Downloads/graalLibs/lib)
+     */
+    public void setGraalLibsUserPath(String graalLibsUserPath) {
+        this.graalLibsUserPath = graalLibsUserPath;
     }
 
     public String getJavaFXRoot() {

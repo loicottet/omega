@@ -88,12 +88,18 @@ public class SVMBridge {
     static void init() {
         Config omegaConfig = Omega.getConfig();
         String target = Omega.getTarget(omegaConfig);
-        Path graallibs = USER_OMEGA_PATH
-                .resolve("graalLibs")
-                .resolve(omegaConfig.getGraalLibsVersion())
-                .resolve("bundle")
-                .resolve("lib");
-        omegaConfig.setDepsRoot(graallibs.toString());
+        Path graallibs;
+        String graalLibsUserPath = omegaConfig.getGraalLibsUserPath();
+        if (graalLibsUserPath == null || graalLibsUserPath.isEmpty()) {
+            graallibs = USER_OMEGA_PATH
+                    .resolve("graalLibs")
+                    .resolve(omegaConfig.getGraalLibsVersion())
+                    .resolve("bundle")
+                    .resolve("lib");
+        } else {
+            graallibs = Path.of(graalLibsUserPath);
+        }
+        omegaConfig.setGraalLibsRoot(graallibs.toString());
         Path javalibs = USER_OMEGA_PATH
                 .resolve("javaStaticSdk")
                 .resolve(omegaConfig.getJavaStaticSdkVersion())
