@@ -66,11 +66,11 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     private static final List<String> linuxlibsFX = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
             "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lz");
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lz");
 
     @Override
     public List<String> getJavaFXJNIClassList() {
@@ -99,9 +99,11 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         System.err.println("Compiling additional sources to " + workDir);
         Files.createDirectories(workDir);
         FileOps.copyResource("/native/linux/launcher.c", workDir.resolve("launcher.c"));
+        FileOps.copyResource("/native/linux/thread.c", workDir.resolve("thread.c"));
         ProcessBuilder processBuilder = new ProcessBuilder("gcc");
         processBuilder.command().add("-c");
         processBuilder.command().add("launcher.c");
+        processBuilder.command().add("thread.c");
         processBuilder.directory(workDir.toFile());
         String cmds = String.join(" ", processBuilder.command());
         processBuilder.redirectErrorStream(true);
@@ -137,6 +139,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         linkBuilder.command().add(linux.toString() + "/" + appName);
         linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
         linkBuilder.command().add(linux.toString() + "/launcher.o");
+        linkBuilder.command().add(linux.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
         // LLVM
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
