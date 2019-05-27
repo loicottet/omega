@@ -27,18 +27,14 @@
  */
 package com.gluonhq.omega.target;
 
-import com.dd.plist.NSArray;
 import com.dd.plist.NSDictionary;
-import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
 import com.gluonhq.omega.util.NSDictionaryEx;
-import com.gluonhq.omega.util.ProcessArgs;
 import com.gluonhq.omega.util.XcodeUtil;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -577,12 +573,11 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         if (! resourcePath.toFile().exists()) {
             return;
         }
+        logDebug("Calling actool for resources at " + resourcePath.toString());
         Files.walk(resourcePath, 1).forEach(p -> {
-            System.out.println("p = " + p);
             if (Files.isDirectory(p)) {
                 if (p.toString().endsWith(".xcassets")) {
                     try {
-                        logDebug("Calling actool for " + p.toString());
                         actool(p, "macosx",
                                 minOSVersion, Arrays.asList("mac"), "Contents/Resources");
                     } catch (Exception ex) {
