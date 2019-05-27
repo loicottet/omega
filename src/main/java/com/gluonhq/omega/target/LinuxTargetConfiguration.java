@@ -55,6 +55,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     private static final List<String> javafxReflectionLinuxClassList = Arrays.asList(
             "com.sun.glass.ui.gtk.GtkPlatformFactory",
+            "com.sun.prism.es2.ES2Pipeline",
             "com.sun.prism.es2.X11GLFactory",
             "com.sun.javafx.font.freetype.FTFactory");
 
@@ -66,7 +67,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     private static final List<String> linuxlibsFX = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
             "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lz");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lGL", "-lX11", "-lz");
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
@@ -135,6 +136,13 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         Path linux = gvmPath.getParent().resolve("linux").resolve(appName);
 
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
+        linkBuilder.command().add("-rdynamic");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("JNI_OnLoad_prism_es2");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("JNI_OnLoad_glass");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("JNI_OnLoad_glassgtk3");
         linkBuilder.command().add("-o");
         linkBuilder.command().add(linux.toString() + "/" + appName);
         linkBuilder.command().add(linux.toString() + "/launcher.o");
