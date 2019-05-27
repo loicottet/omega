@@ -38,7 +38,7 @@ extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece4
 -(void)startVM:(id)selector {
     NSLog(@"Starting Gluon VM...");
     pthread_t me = pthread_self();
-    fprintf(stderr, "Starting on thread: %p\n",me);
+    // fprintf(stderr, "Starting on thread: %p\n",me);
     (*IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e)(1);
     NSLog(@"Started Gluon VM...");
 }
@@ -49,12 +49,12 @@ extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece4
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification  {
     pthread_t me = pthread_self();
-    fprintf(stderr, "ApplicationDidFinishLaunching called, me = %p\n", me);
+    // fprintf(stderr, "ApplicationDidFinishLaunching called, me = %p\n", me);
     [self performSelectorInBackground:@selector(startVM:) withObject:nil];
 }
 
 - (void)applicationDidFinishLaunchingWithOptions:(NSNotification *)aNotification  {
-fprintf(stderr, "DIDFINISHLAUNCHING with options\n");
+    // fprintf(stderr, "DIDFINISHLAUNCHING with options\n");
      [self performSelectorInBackground:@selector(startVM:) withObject:nil];
 }
 
@@ -66,12 +66,12 @@ fprintf(stderr, "DIDFINISHLAUNCHING with options\n");
 
 void outBox(int argc, char** argv) {
     pthread_t me = pthread_self();
-    fprintf(stderr, "in outbox, on thread %p, argc = %d and argv = %p\n", me,argc, argv);
+    // fprintf(stderr, "in outbox, on thread %p, argc = %d and argv = %p\n", me,argc, argv);
 
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     AppDelegate* appDelegate = [[AppDelegate alloc] init];
     NSApplication.sharedApplication.delegate = appDelegate;
-    fprintf(stderr, "in outbox2, on thread %p\n", me);
+    // fprintf(stderr, "in outbox2, on thread %p\n", me);
     [NSApplication sharedApplication];
 
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -80,12 +80,12 @@ void outBox(int argc, char** argv) {
             [NSApp activateIgnoringOtherApps:YES];
         });
 
-    fprintf(stderr, "sharedall called\n");
+    // fprintf(stderr, "sharedall called\n");
     [NSApp run];
-    fprintf(stderr, "in outbox3, on thread %p\n", me);
+    // fprintf(stderr, "in outbox3, on thread %p\n", me);
 
     [pool release];
 
-    fprintf(stderr, "Outbox exit now\n");
+    // fprintf(stderr, "Outbox exit now\n");
 }
 
