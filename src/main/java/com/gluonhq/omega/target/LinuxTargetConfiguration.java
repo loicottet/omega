@@ -66,12 +66,20 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     private static final List<String> linuxlibsFX = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
-            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lGL", "-lX11", "-lz");
+            "-lprism_es2", "-lglass", "-lglassgtk3", "-ljavafx_font",
+            "-ljavafx_font_freetype", "-ljavafx_iio",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11",
+            "-lsunec", "-lGl", "-lX11", "-lgtk-3", "-lgdk-3",
+            "-lpangocairo-1.0", "-lpango-1.0", "-latk-1.0",
+            "-lcairo-gobject", "-lcairo", "-lgdk_pixbuf-2.0",
+            "-lgio-2.0", "-lgobject-2.0", "-lglib-2.0", "-lfreetype",
+            "-lgthread-2.0", "-lstdc++", "-lz");
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lz");
+            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lGL", "-lX11", "-lz");
+
 
     @Override
     public List<String> getJavaFXJNIClassList() {
@@ -120,7 +128,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     @Override
     public void link(Path workDir, String appName, String target) throws Exception {
         super.link(workDir, appName, target);
-        System.err.println("Linking");
+        System.err.println("Linking into "+appName);
         SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
         System.err.println("got o at: " + o.toString());
@@ -143,6 +151,22 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         linkBuilder.command().add("JNI_OnLoad_glass");
         linkBuilder.command().add("-u");
         linkBuilder.command().add("JNI_OnLoad_glassgtk3");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("JNI_OnLoad_javafx_font");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("JNI_OnLoad_javafx_font_freetype");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("Java_com_sun_prism_es2_X11GLPixelFormat_nCreatePixelFormat");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("Java_com_sun_prism_es2_X11GLDrawable_nGetDummyDrawable");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("Java_com_sun_prism_es2_X11GLContext_nInitialize");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("Java_com_sun_glass_ui_gtk_GtkTimer__1start");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("Java_com_sun_glass_ui_gtk_GtkWindow__1createWindow");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("Java_com_sun_glass_ui_gtk_GtkView__1create");
         linkBuilder.command().add("-o");
         linkBuilder.command().add(linux.toString() + "/" + appName);
         linkBuilder.command().add(linux.toString() + "/launcher.o");
