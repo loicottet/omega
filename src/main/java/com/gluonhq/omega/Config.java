@@ -39,6 +39,7 @@ public class Config {
     private String JavaFXRoot;
     private String StaticRoot;
     private boolean useJavaFX = true;
+    private boolean enableCheckHash = true;
 
     private String target;
     private String backend;
@@ -147,6 +148,18 @@ public class Config {
 
     public void setUseJavaFX(boolean useJavaFX) {
         this.useJavaFX = useJavaFX;
+    }
+
+    public boolean isEnableCheckHash() {
+        return enableCheckHash;
+    }
+
+    /**
+     * Enables hash checking to verify integrity of Graal and Java/JavaFX files
+     * @param enableCheckHash boolean to enable hash checking
+     */
+    public void setEnableCheckHash(boolean enableCheckHash) {
+        this.enableCheckHash = enableCheckHash;
     }
 
     public String getTarget() {

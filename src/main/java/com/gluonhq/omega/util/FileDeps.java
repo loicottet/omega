@@ -56,8 +56,6 @@ public class FileDeps {
 
     private static final Logger LOGGER = Logger.getLogger(FileDeps.class.getName());
 
-    private static final boolean SKIP_HASH = false;
-
     private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${target}-${version}.zip";
     private static final String URL_JAVA_STATIC_SDK = "http://download2.gluonhq.com/omega/javastaticsdk/${target}-libs-${version}.zip";
     private static final String URL_JAVAFX_STATIC_SDK = "http://download2.gluonhq.com/omega/javafxstaticsdk/${target}-libsfx-${version}.zip";
@@ -114,7 +112,7 @@ public class FileDeps {
                         .resolve("clibraries").toFile().isDirectory()) {
                     LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/lib/svm/clibraries not found");
                     downloadGraalLibs = true;
-                } else if (!SKIP_HASH) {
+                } else if (config.isEnableCheckHash()) {
                     LOGGER.info("Checking graalLibs hashes");
                     Map<String, String> hashes = getHashMap(graalLibs.getParent().toString() + File.separator + "graalLibs.md5");
                     if (hashes == null) {
@@ -145,7 +143,7 @@ public class FileDeps {
                     .anyMatch(f -> !f.exists())) {
                 LOGGER.info("jar file not found");
                 downloadJavaStatic = true;
-            } else if (!SKIP_HASH) {
+            } else if (config.isEnableCheckHash()) {
                 LOGGER.info("Checking java static sdk hashes");
                 Map<String, String> hashes = getHashMap(javaStatic.getParent().toString() + File.separator + "javaStaticSdk.md5");
                 if (hashes == null) {
@@ -176,7 +174,7 @@ public class FileDeps {
                     .anyMatch(f -> !f.exists())) {
                 LOGGER.info("jar file not found");
                 downloadJavaFXStatic = true;
-            } else if (!SKIP_HASH) {
+            } else if (config.isEnableCheckHash()) {
                 LOGGER.info("Checking javafx static sdk hashes");
                 Map<String, String> hashes = getHashMap(javafxStatic.getParent().getParent().toString() + File.separator + "javafxStaticSdk.md5");
                 if (hashes == null) {
