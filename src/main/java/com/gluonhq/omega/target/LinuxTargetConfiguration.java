@@ -67,12 +67,12 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     private static final List<String> linuxlibsFX = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
             "-lprism_es2", "-lglass", "-lglassgtk3", "-ljavafx_font",
-            "-ljavafx_font_freetype", "-ljavafx_iio",
+            "-ljavafx_font_freetype", "-ljavafx_font_pango", "-ljavafx_iio",
             "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11",
             "-lsunec", "-lGL", "-lX11", "-lgtk-3", "-lgdk-3",
             "-lpangocairo-1.0", "-lpango-1.0", "-latk-1.0",
             "-lcairo-gobject", "-lcairo", "-lgdk_pixbuf-2.0",
-            "-lgio-2.0", "-lgobject-2.0", "-lglib-2.0", "-lfreetype",
+            "-lgio-2.0", "-lgobject-2.0", "-lglib-2.0", "-lfreetype", "-lpangoft2-1.0",
             "-lgthread-2.0", "-lstdc++", "-lz");
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
@@ -154,6 +154,8 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         linkBuilder.command().add("JNI_OnLoad_javafx_font");
         linkBuilder.command().add("-u");
         linkBuilder.command().add("JNI_OnLoad_javafx_font_freetype");
+        linkBuilder.command().add("-u");
+        linkBuilder.command().add("JNI_OnLoad_javafx_font_pango");
         linkBuilder.command().add("-u");
         linkBuilder.command().add("Java_com_sun_prism_es2_X11GLPixelFormat_nCreatePixelFormat");
         linkBuilder.command().add("-u");
