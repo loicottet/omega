@@ -68,7 +68,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
             "-lprism_es2", "-lglass", "-lglassgtk3", "-ljavafx_font",
             "-ljavafx_font_freetype", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11",
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lprefs", "-lj2pkcs11",
             "-lsunec", "-lGl", "-lX11", "-lgtk-3", "-lgdk-3",
             "-lpangocairo-1.0", "-lpango-1.0", "-latk-1.0",
             "-lcairo-gobject", "-lcairo", "-lgdk_pixbuf-2.0",
@@ -77,8 +77,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
 
     private static final List<String> linuxlibs = Arrays.asList("-lffi",
             "-lpthread", "-lz", "-ldl", "-lstrictmath", "-llibchelper", "-lm",
-            "-lprism_es2", "-lglass", "-ljavafx_font", "-ljavafx_iio",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec", "-lGL", "-lX11", "-lz");
+            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lprefs", "-lj2pkcs11", "-lsunec", "-lGL", "-lX11", "-lz");
 
 
     @Override
