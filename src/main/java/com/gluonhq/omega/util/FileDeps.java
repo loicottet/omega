@@ -56,7 +56,7 @@ public class FileDeps {
 
     private static final Logger LOGGER = Logger.getLogger(FileDeps.class.getName());
 
-    private static final boolean SKIP_HASH = true;
+    private static final boolean SKIP_HASH = false;
 
     private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${target}-${version}.zip";
     private static final String URL_JAVA_STATIC_SDK = "http://download2.gluonhq.com/omega/javastaticsdk/${target}-libs-${version}.zip";
