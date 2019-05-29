@@ -136,7 +136,7 @@ public class FileDeps {
         Path javaStatic = Path.of(config.getStaticRoot());
 
         if (! Files.isDirectory(javaStatic)) {
-            LOGGER.info("javaStaticSdk/" + config.getGraalLibsVersion() + "/" + target + "-libs folder not found");
+            LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
             downloadJavaStatic = true;
         } else {
             String path = javaStatic.toString();
