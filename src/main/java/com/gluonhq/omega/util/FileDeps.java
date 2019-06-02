@@ -89,13 +89,13 @@ public class FileDeps {
         boolean downloadGraalLibs = false, downloadJavaStatic = false, downloadJavaFXStatic = false;
 
         // GraalLibs
-        LOGGER.info("Processing graalLibs dependencies");
         String graalLibsUserPath = config.getGraalLibsUserPath();
         if (graalLibsUserPath != null && ! graalLibsUserPath.isEmpty() &&
                 Files.isDirectory(Path.of(graalLibsUserPath))) {
             LOGGER.info("Using GraalLibs from user path");
         } else {
             Path graalLibs = Path.of(config.getGraalLibsRoot());
+            LOGGER.info("Processing graalLibs dependencies at " + graalLibs.toString());
 
             if (!Files.isDirectory(graalLibs)) {
                 LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/lib folder not found");
@@ -114,7 +114,7 @@ public class FileDeps {
                     downloadGraalLibs = true;
                 } else if (config.isEnableCheckHash()) {
                     LOGGER.info("Checking graalLibs hashes");
-                    Map<String, String> hashes = getHashMap(graalLibs.getParent().toString() + File.separator + "graalLibs.md5");
+                    Map<String, String> hashes = getHashMap(graalLibs.getParent().getParent().toString() + File.separator + "graalLibs.md5");
                     if (hashes == null) {
                         LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/graalLibs.md5 not found");
                         downloadGraalLibs = true;
@@ -130,8 +130,8 @@ public class FileDeps {
 
         // Java Static
 
-        LOGGER.info("Processing JavaStatic dependencies");
         Path javaStatic = Path.of(config.getStaticRoot());
+        LOGGER.info("Processing JavaStatic dependencies at " + javaStatic.toString());
 
         if (! Files.isDirectory(javaStatic)) {
             LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
@@ -145,9 +145,9 @@ public class FileDeps {
                 downloadJavaStatic = true;
             } else if (config.isEnableCheckHash()) {
                 LOGGER.info("Checking java static sdk hashes");
-                Map<String, String> hashes = getHashMap(javaStatic.getParent().toString() + File.separator + "javaStaticSdk.md5");
+                Map<String, String> hashes = getHashMap(javaStatic.getParent().toString() + File.separator + "javaStaticSdk-" + target + ".md5");
                 if (hashes == null) {
-                    LOGGER.info("javaStaticSdk/" + config.getGraalLibsVersion() + "/javaStaticSdk.md5 not found");
+                    LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/javaStaticSdk-" + target + ".md5 not found");
                     downloadJavaStatic = true;
                 } else if (JAVA_FILES.stream()
                         .map(s -> new File(path, s))
@@ -159,13 +159,12 @@ public class FileDeps {
         }
 
         // JavaFX Static
-
-        LOGGER.info("Processing JavaFXStatic dependencies");
         Path javafxStatic = Path.of(config.getJavaFXRoot())
                 .resolve("lib");
+        LOGGER.info("Processing JavaFXStatic dependencies at " + javafxStatic.toString());
 
         if (! Files.isDirectory(javafxStatic)) {
-            LOGGER.info("javafxStaticSdk/" + config.getGraalLibsVersion() + "/" + target + "-sdk/lib folder not found");
+            LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/" + target + "-sdk/lib folder not found");
             downloadJavaFXStatic = true;
         } else {
             String path = javafxStatic.toString();
@@ -176,9 +175,9 @@ public class FileDeps {
                 downloadJavaFXStatic = true;
             } else if (config.isEnableCheckHash()) {
                 LOGGER.info("Checking javafx static sdk hashes");
-                Map<String, String> hashes = getHashMap(javafxStatic.getParent().getParent().toString() + File.separator + "javafxStaticSdk.md5");
+                Map<String, String> hashes = getHashMap(javafxStatic.getParent().getParent().toString() + File.separator + "javafxStaticSdk-" + target + ".md5");
                 if (hashes == null) {
-                    LOGGER.info("javafxStaticSdk/" + config.getGraalLibsVersion() + "/javafxStaticSdk.md5 not found");
+                    LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/javafxStaticSdk-" + target + ".md5 not found");
                     downloadJavaFXStatic = true;
                 } else if (JAVAFX_FILES.stream()
                         .map(s -> new File(path, s))
@@ -222,7 +221,7 @@ public class FileDeps {
                         .replace("${target}", Omega.getTarget(config))
                         .replace("${version}", config.getGraalLibsVersion()),
                 omegaPath.resolve("graallibs-${version}.zip".replace("${version}", config.getGraalLibsVersion())),
-                "graalLibs", config.getGraalLibsVersion());
+                "graalLibs", config.getGraalLibsVersion(), "graalLibs.md5");
         LOGGER.info("Processing zip graalLibs done");
     }
 
@@ -230,19 +229,19 @@ public class FileDeps {
         LOGGER.info("Process zip javaStaticSdk");
         processZip(URL_JAVA_STATIC_SDK.replace("${version}", config.getJavaStaticSdkVersion()).replace("${target}", target),
                 omegaPath.resolve("${target}-libs-${version}.zip".replace("${version}", config.getJavaStaticSdkVersion()).replace("${target}", target)),
-                "javaStaticSdk", config.getJavaStaticSdkVersion());
+                "javaStaticSdk", config.getJavaStaticSdkVersion(), "javaStaticSdk-" + target + ".md5");
     }
 
     private static void downloadJavaFXZip(String target, Path omegaPath, Config config) throws IOException {
         LOGGER.info("Process zip javafxStaticSdk");
         processZip(URL_JAVAFX_STATIC_SDK.replace("${version}", config.getJavafxStaticSdkVersion()).replace("${target}", target),
                 omegaPath.resolve("${target}-libsfx-${version}.zip".replace("${version}", config.getJavafxStaticSdkVersion()).replace("${target}", target)),
-                "javafxStaticSdk", config.getJavafxStaticSdkVersion());
+                "javafxStaticSdk", config.getJavafxStaticSdkVersion(), "javafxStaticSdk-" + target + ".md5");
 
         System.err.println("Process zips done");
     }
 
-    private static void processZip(String urlZip, Path zipPath, String folder, String version) throws IOException {
+    private static void processZip(String urlZip, Path zipPath, String folder, String version, String name) throws IOException {
         URL url = new URL(urlZip);
         url.openConnection();
         try (InputStream reader = url.openStream();
@@ -284,7 +283,7 @@ public class FileDeps {
         }
 
         try (FileOutputStream fos =
-                      new FileOutputStream(zipDir.toString() + File.separator + folder + ".md5");
+                      new FileOutputStream(zipDir.toString() + File.separator + name);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(hashes);
         }
