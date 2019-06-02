@@ -221,7 +221,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         libPath = this.gvmPath.resolve("lib");
         Files.createDirectories(libPath);
         System.err.println("Extracting native libs to: " + libPath);
-        classPath.forEach(this::copyNativeLibFiles);
+        classPath.stream()
+            .filter(s -> s.toString().endsWith(".jar"))
+            .forEach(this::copyNativeLibFiles);
 
         this.workDir = this.gvmPath.getParent().resolve("ios").resolve(appName + ".app");
         Files.createDirectories(workDir);
@@ -590,7 +592,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                                     Files.delete(ofij);
                                 }
                             }
-                        } catch (IOException ex) {
+                        } catch (Exception ex) {
                             logDebug("Error: " + ex);
                         }
                     }
@@ -1183,44 +1185,24 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         });
     }
 
-    boolean lipoMatch(Path path) throws IOException {
+    private boolean lipoMatch(Path path) throws Exception {
         return (lipoInfo(path).indexOf(arch) > 0);
     }
 
-    private String lipoInfo(Path path) throws IOException {
+    private String lipoInfo(Path path) throws Exception {
         ProcessArgs args = new ProcessArgs(
                 "lipo", "-info", path.toFile().getAbsolutePath());
         ProcessBuilder pb = new ProcessBuilder(args.toList());
-        logDebug("PB = " + pb.toString());
         logDebug("PBlist = " + pb.command());
-        StringBuffer sb = new StringBuffer();
-        for (String a : pb.command()) {
-            sb.append(a).append(" ");
-        }
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
-        InputStream is = p.getInputStream();
         StringBuffer answer = new StringBuffer();
-        Thread t = new Thread() {
-            @Override public void run() {
-                try {
-                    BufferedReader br =  new BufferedReader(new InputStreamReader(is));
-                    String l = br.readLine();
-                    while (l != null) {
-                        answer.append(l);
-                        l = br.readLine();
-                    }
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                }
-            }
-        };
-        t.start();
-        try {
-            int a = p.waitFor();
-        } catch (InterruptedException ex) {
-            logDebug("Error : " + ex);
+        Thread thread = FileOps.mergeProcessOutput(p.getInputStream(), answer);
+        int result = p.waitFor();
+        thread.join();
+        if (result != 0) {
+            throw new RuntimeException("Error processing lipo");
         }
         return answer.toString();
     }

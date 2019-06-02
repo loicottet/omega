@@ -177,17 +177,26 @@ public class FileOps {
     }
 
     public static void mergeProcessOutput(final InputStream is) {
+        mergeProcessOutput(is, null);
+    }
+
+    public static Thread mergeProcessOutput(final InputStream is, final StringBuffer sb) {
         Runnable r = () -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
+                    if (sb != null) {
+                        sb.append(line);
+                    }
                     System.err.println("[SUB] " + line);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         };
-        new Thread(r).start();
+        Thread thread = new Thread(r);
+        thread.start();
+        return thread;
     }
 
     public static void createScript(Path script, String cmd) throws IOException {
