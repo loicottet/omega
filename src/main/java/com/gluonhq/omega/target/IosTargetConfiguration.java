@@ -39,6 +39,7 @@ import com.gluonhq.omega.util.DeviceIO;
 import com.gluonhq.omega.util.DeviceLockedException;
 import com.gluonhq.omega.util.FileOps;
 import com.gluonhq.omega.util.IDevice;
+import com.gluonhq.omega.util.Logger;
 import com.gluonhq.omega.util.MobileDeviceBridge;
 import com.gluonhq.omega.util.NSDictionaryEx;
 import com.gluonhq.omega.util.ProcessArgs;
@@ -196,7 +197,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     @Override
     public void compileApplication() throws Exception {
         setupArch(target);
-        System.err.println("Compiling ios application");
+        Logger.logDebug("Compiling ios application");
         SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
     }
 
@@ -220,14 +221,14 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         setupArch(target);
         libPath = this.gvmPath.resolve("lib");
         Files.createDirectories(libPath);
-        System.err.println("Extracting native libs to: " + libPath);
+        Logger.logDebug("Extracting native libs to: " + libPath);
         classPath.stream()
             .filter(s -> s.toString().endsWith(".jar"))
             .forEach(this::copyNativeLibFiles);
 
         this.workDir = this.gvmPath.getParent().resolve("ios").resolve(appName + ".app");
         Files.createDirectories(workDir);
-        System.err.println("Compiling additional sources to " + workDir);
+        Logger.logDebug("Compiling additional sources to " + workDir);
         FileOps.copyResource("/native/ios/AppDelegate" + (isSimulator() ? "-sim" : "") + ".m", workDir.resolve("AppDelegate.m"));
         FileOps.copyResource("/native/ios/AppDelegate.h", workDir.resolve("AppDelegate.h"));
         FileOps.copyResource("/native/ios/main.m", workDir.resolve("main.m"));
@@ -253,8 +254,8 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         FileOps.mergeProcessOutput(p.getInputStream());
         int result = p.waitFor();
         String linkcmds = String.join(" ", processBuilder.command());
-        System.err.println("compile cmds = "+linkcmds);
-        System.err.println("Result of compile = "+result);
+        Logger.logDebug("compile cmds = "+linkcmds);
+        Logger.logDebug("Result of compile = "+result);
         if (result != 0) {
             throw new RuntimeException("Error compiling additional sources");
         }
@@ -266,21 +267,21 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         setupArch(target);
         SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
-        System.err.println("got o at: " + o.toString());
+        Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
         if ("llvm".equals(Omega.getConfig().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
-            System.err.println("got llvm at: " + o2.toString());
+            Logger.logDebug("got llvm at: " + o2.toString());
         }
 
-        System.err.println("Linking at " + workDir.toString());
+        Logger.logDebug("Linking at " + workDir.toString());
         Path gvmPath = workDir.getParent();
         Path omegaPath = gvmPath.getParent();
         appPath = omegaPath.resolve("ios").resolve(appName + ".app");
         Files.createDirectories(appPath);
         libPath = omegaPath.resolve("gvm").resolve("lib");
-        System.err.println("Lib Path at " + libPath.toString() + ", files: " + Files.list(libPath).count());
+        Logger.logDebug("Lib Path at " + libPath.toString() + ", files: " + Files.list(libPath).count());
 
         ProcessBuilder linkBuilder = new ProcessBuilder("clang");
         linkBuilder.command().add("-w");
@@ -329,13 +330,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
         String linkcmds = String.join(" ", linkBuilder.command());
-        logDebug("linkcmds = " + linkcmds);
+        Logger.logDebug("linkcmds = " + linkcmds);
         FileOps.createScript(gvmPath.resolve("link.sh"), linkcmds);
 
         Process linkProcess = linkBuilder.start();
         FileOps.mergeProcessOutput(linkProcess.getInputStream());
         int result = linkProcess.waitFor();
-        System.err.println("result of linking = "+result);
+        Logger.logDebug("result of linking = "+result);
         if (result != 0) {
             throw new RuntimeException("Error linking");
         }
@@ -348,7 +349,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
         processInfoPlist(appPath);
         Path plist = rootPath.resolve("Default-Info.plist");
-        System.err.println("PList at " + plist.toString());
+        Logger.logDebug("PList at " + plist.toString());
         FileOps.copyStream(new FileInputStream(plist.toFile()), appPath.resolve("Default-Info.plist"));
         if (! isSimulator()) {
             signApp();
@@ -360,7 +361,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         super.run(workDir, appName, target);
         setupArch(target);
 
-        System.err.println("Running at " + workDir.toString());
+        Logger.logDebug("Running at " + workDir.toString());
         appPath = workDir.resolve("ios").resolve(appName + ".app");
         appId = appName;
 
@@ -374,12 +375,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                         .filter(e -> e.getKey().equals("CFBundleIdentifier"))
                         .findFirst()
                         .map(e -> {
-                            System.err.println("BUNDLE ID = " + e.getValue().toString());
+                            Logger.logDebug("BUNDLE ID = " + e.getValue().toString());
                             return e.getValue().toString();
                         })
                         .orElseThrow(() -> new RuntimeException("Bundle Id not found"));
             } catch (Exception ex) {
-                logDebug("Error finding bundleId: " + ex);
+                Logger.logDebug("Error finding bundleId: " + ex);
                 return;
             }
 
@@ -388,20 +389,20 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     private void launchOnDevice(String launchDir) throws IOException {
-        logDebug("launchOnDevice at "+launchDir);
+        Logger.logDebug("launchOnDevice at "+launchDir);
         generateDsym(appPath.toFile(), appId + "App", true);
 
-        logDebug("Install app on device");
+        Logger.logDebug("Install app on device");
         mobileDeviceBridge = MobileDeviceBridge.instance;
         mobileDeviceBridge.init();
 
         String[] devices = mobileDeviceBridge.getDeviceIds();
         if (devices.length == 0) {
-            logSevere("No iOS devices connected to this system. Exit install procedure");
+            Logger.logSevere("No iOS devices connected to this system. Exit install procedure");
             return;
         }
         if (devices.length > 1) {
-            logSevere("Multiple iOS devices connected to this system: " + String.join(", ", devices ) + ". We'll use the first one.");
+            Logger.logSevere("Multiple iOS devices connected to this system: " + String.join(", ", devices ) + ". We'll use the first one.");
         }
         String deviceId = devices[0];
         devicePointer = mobileDeviceBridge.getDevice(deviceId);
@@ -412,19 +413,19 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
         if (install()) {
             launch();
-            logInfo("App is installed on the device");
+            Logger.logInfo("App is installed on the device");
         } else {
-            logInfo("Something went wrong. App wasn't installed on the device");
+            Logger.logInfo("Something went wrong. App wasn't installed on the device");
         }
 
     }
 
     private void launchOnSimulator(String launchDir) throws IOException {
         String simUdid = getSimUdid();
-        System.err.println("ERR: Launch simulator on simudid: " + simUdid + " and launchDir = " + launchDir);
-        logDebug("OUT: Launch simulator on simudid: " + simUdid + " and launchDir = " + launchDir);
+        Logger.logDebug("ERR: Launch simulator on simudid: " + simUdid + " and launchDir = " + launchDir);
+        Logger.logDebug("OUT: Launch simulator on simudid: " + simUdid + " and launchDir = " + launchDir);
         if (simUdid == null) {
-            logSevere("No iOS simulator launched, and couldn't find iPhone 6");
+            Logger.logSevere("No iOS simulator launched, and couldn't find iPhone 6");
             return;
         }
         try {
@@ -434,13 +435,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             }
             Thread.sleep(1000);
             String cmd = target.toAbsolutePath().toString();
-            logDebug("cmd = " + cmd);
+            Logger.logDebug("cmd = " + cmd);
             ProcessBuilder pb = new ProcessBuilder(cmd, "--udid=" + simUdid, "--app-path=" + launchDir);
-            logDebug("PB = " + pb);
+            Logger.logDebug("PB = " + pb);
             // TODO allow to choose ios devices
             pb.redirectErrorStream(true);
             //   try {
-            logDebug("start process...");
+            Logger.logDebug("start process...");
             Process p = pb.start();
 
             FileOps.mergeProcessOutput(p.getInputStream());
@@ -448,7 +449,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             // xcrun simctl install
             // xcrun simctl launch
         } catch (Throwable ex) {
-            logSevere(ex, "[GENERAL ERROR]");
+            Logger.logSevere(ex, "[GENERAL ERROR]");
         }
     }
 
@@ -482,13 +483,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             if (devices.size() > 0) {
                 String i6 = devices.get("iPhone 6");
                 if (i6 == null) {
-                    logDebug("devices = " + devices);
+                    Logger.logDebug("devices = " + devices);
 
                 }
                 return i6;
             }
         } catch (Throwable ex) {
-            logSevere(ex, "Error retrieving Sim UDID");
+            Logger.logSevere(ex, "Error retrieving Sim UDID");
         }
         return answer;
     }
@@ -503,7 +504,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         Path plist = rootPath.resolve("Default-Info.plist");
         boolean inited = true;
         if (! plist.toFile().exists()) {
-            logDebug("Copy Default-info.plist to " + plist.toString());
+            Logger.logDebug("Copy Default-info.plist to " + plist.toString());
             FileOps.copyResource("/native/ios/Default-Info.plist", plist);
             assets.forEach(a -> FileOps.copyResource("/native/ios/assets/" + a, rootPath.resolve("assets").resolve(a)));
             inited = false;
@@ -544,7 +545,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                                 NSDictionary d = (NSDictionary) PropertyListParser.parse(f.toFile());
                                 d.keySet().forEach(k -> orderedDict.put(k, d.get(k)));
                             } catch (Exception e) {
-                                logSevere(e, "Error reading plist");
+                                Logger.logSevere(e, "Error reading plist");
                             }
                         });
             }
@@ -558,12 +559,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                             System.out.println("BUNDLE ID = "+e.getValue().toString());
                             bundleId = e.getValue().toString();
                         }
-                        logDebug("Info.plist Entry: " + e);
+                        Logger.logDebug("Info.plist Entry: " + e);
                     }
             );
 
         } catch (Exception ex) {
-            logSevere(ex, "Could not process property list");
+            Logger.logSevere(ex, "Could not process property list");
         }
     }
 
@@ -579,26 +580,26 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                 .forEach(ze -> {
                         try {
                             String fn = ze.getName();
-                            logDebug("NATIVE LIB " + fn + " is part of jar " + jar + " in zipfile " + zf);
+                            Logger.logDebug("NATIVE LIB " + fn + " is part of jar " + jar + " in zipfile " + zf);
                             String uniqueName = new File(ze.getName()).getName();
                             if (uniqueObjectFileNames.contains(uniqueName)) {
-                                logDebug("I won't add " + fn + " since we already have a similar file.");
+                                Logger.logDebug("I won't add " + fn + " since we already have a similar file.");
                             } else {
                                 Path ofij = FileOps.copyStream(zf.getInputStream(ze), libPath.resolve(uniqueName));
                                 if (lipoMatch(ofij)) {
                                     uniqueObjectFileNames.add(uniqueName);
                                 } else {
-                                    logDebug("Ignore native lib, wrong architecture!");
+                                    Logger.logDebug("Ignore native lib, wrong architecture!");
                                     Files.delete(ofij);
                                 }
                             }
                         } catch (Exception ex) {
-                            logDebug("Error: " + ex);
+                            Logger.logDebug("Error: " + ex);
                         }
                     }
                 );
         } catch (IOException ex) {
-            logDebug("Error: " + ex);
+            Logger.logDebug("Error: " + ex);
         }
     }
 
@@ -619,7 +620,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             getProvisioningProfile();
         }
         SigningIdentity identity = signingIdentity;
-        System.err.println("Signing app with identity: " + identity);
+        Logger.logDebug("Signing app with identity: " + identity);
         ProcessArgs args = new ProcessArgs("codesign", "-f", "-s", identity.fingerprint);
         if (entitlementsPList != null) {
             args.addAll("--entitlements", entitlementsPList.toAbsolutePath().toString());
@@ -640,24 +641,24 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         FileOps.mergeProcessOutput(p.getInputStream());
         try {
             boolean res = p.waitFor(10, TimeUnit.SECONDS);
-            System.err.println("RES for signing = " + res);
+            Logger.logDebug("RES for signing = " + res);
         } catch (InterruptedException ex) {
-            System.err.println("Error processing codesing " + ex.getMessage());
+            Logger.logDebug("Error processing codesing " + ex.getMessage());
             ex.printStackTrace();
             return false;
         }
 
         if (!validateCodesign(target)) {
-            System.err.println("Codesign validation failed");
+            Logger.logDebug("Codesign validation failed");
             return false;
         }
 
-        System.err.println("Codesign done");
+        Logger.logDebug("Codesign done");
         return true;
     }
 
     private boolean validateCodesign(Path target) throws IOException {
-        System.err.println("Validating codesign...");
+        Logger.logDebug("Validating codesign...");
         ProcessArgs args = new ProcessArgs("codesign", "--verify", "-vvvv", target.toAbsolutePath().toString());
         ProcessBuilder pb = new ProcessBuilder(args.toList());
         pb.redirectErrorStream(true);
@@ -668,13 +669,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         // satisfies its Designated Requirement
         try {
             boolean res = p.waitFor(5, TimeUnit.SECONDS);
-            System.err.println("RES for validateCodesign = " + res);
+            Logger.logDebug("RES for validateCodesign = " + res);
         } catch (InterruptedException ex) {
-            System.err.println("Error processing validateCodesign " + ex.getMessage());
+            Logger.logDebug("Error processing validateCodesign " + ex.getMessage());
             ex.printStackTrace();
             return false;
         }
-        System.err.println("Validation codesign result: " + validate);
+        Logger.logDebug("Validation codesign result: " + validate);
         return validate;
     }
 
@@ -691,7 +692,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                 if (line.contains(CODESIGN_OK_1) || line.contains(CODESIGN_OK_2) || line.contains(CODESING_OK_3)) {
                     validate = true;
                 }
-                System.err.println("[SUB] " + line);
+                Logger.logDebug("[SUB] " + line);
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -724,7 +725,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         }
         dict.put("get-task-allow", getTaskAllow);
         dict.saveAsXML(destFile);
-        System.err.println("DICT = "+dict.getEntrySet());
+        Logger.logDebug("DICT = "+dict.getEntrySet());
         return destFile;
     }
 
@@ -737,12 +738,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     if (providedProvisioningProfile == null
                             || providedProvisioningProfile.equals(provisioningProfile.getName())) {
                         signingIdentity = candidate;
-                        System.err.println("Got provisioning profile: " + provisioningProfile.getName());
+                        Logger.logDebug("Got provisioning profile: " + provisioningProfile.getName());
                         return provisioningProfile;
                     }
                 }
             }
-            System.err.println("Warning, getProvisioningProfile is failing");
+            Logger.logDebug("Warning, getProvisioningProfile is failing");
         }
         return provisioningProfile;
     }
@@ -768,13 +769,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         ProcessArgs args = new ProcessArgs(
                 "xcrun", "dsymutil","-o", dsymDir.getAbsolutePath(), exePath.getAbsolutePath());
         ProcessBuilder pb = new ProcessBuilder(args.toList());
-        logDebug("PB = " + pb.toString());
-        logDebug("PBlist = " + pb.command());
+        Logger.logDebug("PB = " + pb.toString());
+        Logger.logDebug("PBlist = " + pb.command());
         StringBuffer sb = new StringBuffer();
         for (String a : pb.command()) {
             sb.append(a).append(" ");
         }
-        System.err.println("command to dsymutil: " + sb);
+        Logger.logDebug("command to dsymutil: " + sb);
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
@@ -799,7 +800,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     .filter(f -> f.getFileName().toString().startsWith(appId))
                     .forEach(f -> {
                         try {
-                            logDebug("Removing older version: " + f.getFileName().toString());
+                            Logger.logDebug("Removing older version: " + f.getFileName().toString());
                             FileOps.deleteDir(f);
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -826,38 +827,38 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
     private boolean install() throws IOException {
         getOptions();
-        logDebug("Installing app with id "+appId+" and local path = "+localPath);
+        Logger.logDebug("Installing app with id "+appId+" and local path = "+localPath);
         if (! prepareInstall(localAppPath)) {
-            logInfo("prepare Install failed");
+            Logger.logInfo("prepare Install failed");
             return false;
         }
         Pointer clientPointer = lockDown();
-        logDebug("umbrella cp after lockdown = "+clientPointer);
+        Logger.logDebug("umbrella cp after lockdown = "+clientPointer);
         if (! uploadInternal()) {
-            logInfo("Upload internal failed");
+            Logger.logInfo("Upload internal failed");
             return false;
         }
         if (! installInternal()) {
-            logInfo("Install internal failed");
+            Logger.logInfo("Install internal failed");
             return false;
         }
-        logDebug("umbrella cp will unlock = "+clientPointer);
+        Logger.logDebug("umbrella cp will unlock = "+clientPointer);
 
         unlock(clientPointer);
-        logInfo("Install process finished");
+        Logger.logInfo("Install process finished");
         return true;
     }
 
     private Pointer getOptions() throws IOException {
-        logDebug("getting options...");
+        Logger.logDebug("getting options...");
         NSDictionary dict = new NSDictionary();
         dict.put("PackageType", "Developer");
         byte[] b = BinaryPropertyListWriter.writeToArray(dict);
-        logDebug("bytes for options has size "+b.length);
+        Logger.logDebug("bytes for options has size "+b.length);
         Pointer plistPointer = mobileDeviceBridge.getPlistPointer(b, 0, b.length);
-        logDebug("pointer for list = "+plistPointer);
+        Logger.logDebug("pointer for list = "+plistPointer);
         Object whatsthis = mobileDeviceBridge.getValueFromPlist(plistPointer.getPointer(0));
-        logDebug("REVERSE POINTER: "+whatsthis);
+        Logger.logDebug("REVERSE POINTER: "+whatsthis);
         return plistPointer;
     }
 
@@ -866,13 +867,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         Path dest = appDir.resolve("embedded.mobileprovision");
         Files.copy(provisioningProfilePath, dest, REPLACE_EXISTING);
         boolean taskAllow = getProvisioningProfile().isDevelopment();
-        logDebug("ProvisioningProfile for Development: " + taskAllow);
+        Logger.logDebug("ProvisioningProfile for Development: " + taskAllow);
         return codesignApp(getOrCreateEntitlementsPList(taskAllow, appId), appDir);
     }
 
     private Pointer lockDown() {
         Pointer answer =  mobileDeviceBridge.lockdownClient(devicePointer, "mylockdownlabel");
-        logDebug("lockdown asked, answer = "+answer);
+        Logger.logDebug("lockdown asked, answer = "+answer);
         return answer;
     }
 
@@ -884,7 +885,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     private static long totalFiles;
 
     private boolean uploadInternal() throws IOException {
-        logInfo("UploadInternal start");
+        Logger.logInfo("UploadInternal start");
         Pointer lockdownClientPointer = lockDown();
         try {
             Pointer lockdownServiceDescriptorPointer =
@@ -899,7 +900,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                 mobileDeviceBridge.makeDirectory(afcClientPointer, targetPath);
 
                 final Path root = localAppPath.getParent();
-                logDebug("Start walking filetree in uploadInternal");
+                Logger.logDebug("Start walking filetree in uploadInternal");
                 Files.walkFileTree(localAppPath, new SimpleFileVisitor<Path>() {
 
                     private double progress;
@@ -908,12 +909,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     {
                         counter = 0;
                         totalFiles = FileOps.getTotalFilesCount(localAppPath.toFile());
-                        logDebug("Total files to upload: " + totalFiles);
+                        Logger.logDebug("Total files to upload: " + totalFiles);
                     }
 
                     @Override
                     public FileVisitResult preVisitDirectory(Path p, BasicFileAttributes att) {
-                        logDebug("uploadInternal, visitDir " + p);
+                        Logger.logDebug("uploadInternal, visitDir " + p);
                         Path relativize = root.relativize(p);
                         String deviceDir = toAbsoluteDevicePath(targetPath, relativize);
                         mobileDeviceBridge.makeDirectory(afcClientPointer, deviceDir);
@@ -923,26 +924,26 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     @Override
                     public FileVisitResult visitFile(Path p, BasicFileAttributes att) {
                         counter += 1;
-                        logDebug("[" + counter + "/" + totalFiles + "] Visit file with path "+p);
+                        Logger.logDebug("[" + counter + "/" + totalFiles + "] Visit file with path "+p);
                         String deviceFile = toAbsoluteDevicePath(targetPath, root.relativize(p));
                         try {
                             if (Files.isSymbolicLink(p)) {
                                 Path linkTargetPath = Files.readSymbolicLink(p);
                                 mobileDeviceBridge.makeSymLink(afcClientPointer, linkTargetPath.toString(), deviceFile);
                             } else if (Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS)) {
-                                logDebug("visit regular file with path "+p);
+                                Logger.logDebug("visit regular file with path "+p);
                                 long fd = mobileDeviceBridge.fileOpen(afcClientPointer, deviceFile, 3);
                                 try (InputStream is = Files.newInputStream(p)) {
                                     int n = 0;
                                     int totsize = 0;
                                     while ((n = is.read(buffer)) != -1) {
 //                                fileWrite(fd, buffer, 0, n);
-                                        logDebug("read from buffer: "+n);
+                                        Logger.logDebug("read from buffer: "+n);
                                         int written = mobileDeviceBridge.writeBytes(afcClientPointer, fd, buffer, n);
-                                        logDebug("written: "+written);
+                                        Logger.logDebug("written: "+written);
                                         totsize = totsize + written;
                                     }
-                                    logDebug("Wrote " + totsize + " bytes for file " + deviceFile);
+                                    Logger.logDebug("Wrote " + totsize + " bytes for file " + deviceFile);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 } finally {
@@ -950,35 +951,35 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                                 }
                             }
                         } catch (Exception ex) {
-                            logSevere("Unable to write file " + p + " to mobileDevice: " + ex);
+                            Logger.logSevere("Unable to write file " + p + " to mobileDevice: " + ex);
                         }
 
                         progress = counter / (double) totalFiles * 100;
                         if (Math.round(progress) >= tens) {
-                            logInfo("Upload Progress: " + Math.round(progress) + "%");
+                            Logger.logInfo("Upload Progress: " + Math.round(progress) + "%");
                             tens += 10;
                         }
                         return FileVisitResult.CONTINUE;
 
                     }
                 });
-                logDebug("Done walking filetree in uploadInternal");
+                Logger.logDebug("Done walking filetree in uploadInternal");
                 if (counter < totalFiles) {
-                    logInfo("UploadInternal failed uploading all the files: Files uploaded: " + counter + ", Files expected " + totalFiles);
+                    Logger.logInfo("UploadInternal failed uploading all the files: Files uploaded: " + counter + ", Files expected " + totalFiles);
                     return false;
                 }
             } finally {
-                logDebug("uploadInternal will now free client with pointer "+afcClientPointer);
+                Logger.logDebug("uploadInternal will now free client with pointer "+afcClientPointer);
                 mobileDeviceBridge.freeAfcClient(afcClientPointer);
-                logDebug("uploadInternal did now free client with pointer "+afcClientPointer);
+                Logger.logDebug("uploadInternal did now free client with pointer "+afcClientPointer);
             }
         } finally {
-            logDebug("uploadInternal will now free lockdownpointer "+lockdownClientPointer);
+            Logger.logDebug("uploadInternal will now free lockdownpointer "+lockdownClientPointer);
             unlock(lockdownClientPointer);
-            logDebug("uploadInternal did now free lockdownpointer "+lockdownClientPointer);
+            Logger.logDebug("uploadInternal did now free lockdownpointer "+lockdownClientPointer);
 
         }
-        logInfo("uploadInternal done");
+        Logger.logInfo("uploadInternal done");
         return true;
     }
 
@@ -1016,27 +1017,27 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             Pointer newInstProxyClientPointer = mobileDeviceBridge.newInstProxyClient(devicePointer, lockdownServiceDescriptorPointer);
             try {
                 String path = "/PublicStaging/" + localAppPath.getFileName().toString();
-                logDebug("PATH = " + path);
+                Logger.logDebug("PATH = " + path);
                 error = false;
                 IDevice.InstproxyStatusCallback mb = new IDevice.InstproxyStatusCallback() {
                     @Override
                     public void call(Pointer command, Pointer status, Pointer userData) {
-                        logDebug("CALLBACK CALLED!");
+                        Logger.logDebug("CALLBACK CALLED!");
                         try {
                             NSObject vCommand = mobileDeviceBridge.getValueFromPlist(command);
-                            logDebug("COMMAND = " + vCommand.toJavaObject());
+                            Logger.logDebug("COMMAND = " + vCommand.toJavaObject());
                             NSObject vStatus = mobileDeviceBridge.getValueFromPlist(status);
                             Object stat = vStatus.toJavaObject();
-                            logDebug("STATUS = " + stat + " of class " + stat.getClass());
+                            Logger.logDebug("STATUS = " + stat + " of class " + stat.getClass());
                             if (stat instanceof HashMap) {
                                 HashMap hm = (HashMap) stat;
                                 if (hm.containsKey("Error")) {
                                     Object e = hm.get("Error");
                                     if (hm.containsKey("ErrorDescription")) {
                                         Object d = hm.get("ErrorDescription");
-                                        logInfo("Error: " + e + ", Description: " + d);
+                                        Logger.logInfo("Error: " + e + ", Description: " + d);
                                     } else {
-                                        logInfo("Error: " + e);
+                                        Logger.logInfo("Error: " + e);
                                     }
                                     error = true;
                                     latch.countDown();
@@ -1046,55 +1047,55 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                                     if (o instanceof String) {
                                         String statusString = (String) o;
                                         if (statusString.equalsIgnoreCase("complete")) {
-                                            logInfo("Progress: " + statusString + " [100%]");
+                                            Logger.logInfo("Progress: " + statusString + " [100%]");
                                             latch.countDown();
                                         } else {
-                                            logInfo("Progress: " + statusString + " [" + p + "%]");
+                                            Logger.logInfo("Progress: " + statusString + " [" + p + "%]");
                                         }
                                     }
                                 }
                             }
                         } catch (Throwable ex) {
-                            logSevere(ex, "Failed to get value from plist in IDevice.InstproxyStatusCallback: " + ex);
+                            Logger.logSevere(ex, "Failed to get value from plist in IDevice.InstproxyStatusCallback: " + ex);
                             error = true;
                             latch.countDown();
                         }
                     }
                 };
-                logDebug("Callback created at " + mb);
+                Logger.logDebug("Callback created at " + mb);
                 mobileDeviceBridge.instProxyUpgrade(newInstProxyClientPointer, path, getOptions(), mb, null);
 
-                logDebug("install/upgrade asked, waiting for max 5 minutes now");
+                Logger.logDebug("install/upgrade asked, waiting for max 5 minutes now");
                 latch.await(5, TimeUnit.MINUTES);
                 if (error) {
-                    logInfo("Installing finished due to an error.");
+                    Logger.logInfo("Installing finished due to an error.");
                     return false;
                 }
-                logDebug("done installing, cleanup now");
+                Logger.logDebug("done installing, cleanup now");
             } catch (Throwable e) {
-                logSevere(e, "Error in IDevice.InstproxyStatusCallback");
+                Logger.logSevere(e, "Error in IDevice.InstproxyStatusCallback");
                 e.printStackTrace();
                 return false;
             } finally {
-                logDebug("Freeing instProxyClientPointer at " + newInstProxyClientPointer);
+                Logger.logDebug("Freeing instProxyClientPointer at " + newInstProxyClientPointer);
                 mobileDeviceBridge.freeInstProxyClient(newInstProxyClientPointer);
-                logDebug("freed instProxyClientPointer at " + newInstProxyClientPointer);
+                Logger.logDebug("freed instProxyClientPointer at " + newInstProxyClientPointer);
             }
         } catch (Throwable t1) {
-            logSevere(t1, "Error in installInternal");
+            Logger.logSevere(t1, "Error in installInternal");
             t1.printStackTrace();
             return false;
         } finally {
-            logDebug("Freeing lockdownclientpointer at " + lockdownClientPointer);
+            Logger.logDebug("Freeing lockdownclientpointer at " + lockdownClientPointer);
             unlock(lockdownClientPointer);
-            logDebug("freed lockdownclientpointer at " + lockdownClientPointer);
-            logDebug("installInternal done");
+            Logger.logDebug("freed lockdownclientpointer at " + lockdownClientPointer);
+            Logger.logDebug("installInternal done");
         }
         return true;
     }
 
     private void launch() throws IOException {
-        System.err.println("launch");
+        Logger.logDebug("launch");
         CountDownLatch l = new CountDownLatch(1);
         Thread t = new Thread() {
             @Override
@@ -1107,15 +1108,15 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                         Pointer lockDown = lockDown();
                         String appPath = getAppPath(lockDown, bundleId);
                         Object pv = mobileDeviceBridge.getValue(lockDown, null, "ProductVersion");
-                        logDebug("PV = " + pv);
+                        Logger.logDebug("PV = " + pv);
                         Object bv = mobileDeviceBridge.getValue(lockDown, null, "BuildVersion");
-                        logDebug("BV = " + pv);
+                        Logger.logDebug("BV = " + pv);
                         Pointer lockdownServiceDescriptorPointer = mobileDeviceBridge.startService(lockDown, "com.apple.debugserver");
                         Pointer lockdownServiceDescriptor = lockdownServiceDescriptorPointer.getPointer(0);
                         int port = lockdownServiceDescriptor.getShort(0) & 0xffff;
-                        logDebug("DEBUG PORT at " + port);
+                        Logger.logDebug("DEBUG PORT at " + port);
                         Pointer connectionPointer = mobileDeviceBridge.connectDevice(devicePointer, port);
-                        logDebug("connectPointer: " + connectionPointer);
+                        Logger.logDebug("connectPointer: " + connectionPointer);
                         DeviceIO deviceIO = new DeviceIO(connectionPointer, appPath);
                         try {
                             deviceIO.rerouteIO();
@@ -1136,25 +1137,25 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         };
         t.start();
         try {
-            System.err.println("launch asked, wait on latch");
+            Logger.logDebug("launch asked, wait on latch");
             l.await();
-            logDebug("in launch, latch is counteddown");
+            Logger.logDebug("in launch, latch is counteddown");
         } catch (InterruptedException ex) {
-            System.err.println("interrupted while waiting! " + ex);
+            Logger.logDebug("interrupted while waiting! " + ex);
         }
     }
 
     private String getAppPath(Pointer lockDownPointer, String appPath) throws IOException {
-        logDebug("search apppath for "+appPath);
+        Logger.logDebug("search apppath for "+appPath);
         Pointer servicePointer = mobileDeviceBridge.startService(lockDownPointer, "com.apple.mobile.installation_proxy");
         Pointer newInstProxyClientPointer = mobileDeviceBridge.newInstProxyClient(devicePointer, servicePointer);
         String path = mobileDeviceBridge.getAppPath(newInstProxyClientPointer, appPath);
         if (path == null) {
             mobileDeviceBridge.listApps(newInstProxyClientPointer);
-            logSevere("Path not found, exit now");
+            Logger.logSevere("Path not found, exit now");
             System.exit(0);
         }
-        logDebug("path = "+path);
+        Logger.logDebug("path = "+path);
         return path;
     }
 
@@ -1170,12 +1171,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             if (Files.isDirectory(p)) {
                 if (p.toString().endsWith(".xcassets")) {
                     try {
-                        logDebug("Calling actool for " + p.toString());
+                        Logger.logDebug("Calling actool for " + p.toString());
                         actool(p, isSimulator() ? "iphonesimulator" :"iphoneos",
                                 minOSVersion,
                                 Arrays.asList("iphone", "ipad"), "");
                     } catch (Exception ex) {
-                        logSevere(ex, "Failed creating directory " + p);
+                        Logger.logSevere(ex, "Failed creating directory " + p);
                     }
                 }
             } else {
@@ -1193,7 +1194,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         ProcessArgs args = new ProcessArgs(
                 "lipo", "-info", path.toFile().getAbsolutePath());
         ProcessBuilder pb = new ProcessBuilder(args.toList());
-        logDebug("PBlist = " + pb.command());
+        Logger.logDebug("PBlist = " + pb.command());
         pb.redirectErrorStream(true);
 
         Process p = pb.start();

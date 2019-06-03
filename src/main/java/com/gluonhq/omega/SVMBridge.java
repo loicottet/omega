@@ -32,6 +32,7 @@ import com.gluonhq.omega.target.LinuxTargetConfiguration;
 import com.gluonhq.omega.target.MacosTargetConfiguration;
 import com.gluonhq.omega.util.FileDeps;
 import com.gluonhq.omega.util.FileOps;
+import com.gluonhq.omega.util.Logger;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -138,16 +139,16 @@ public class SVMBridge {
         if (className.contains("/")) {
             mainClass = className.substring(className.indexOf("/") + 1);
         }
-        System.err.println("mainClass: " + mainClass);
+        Logger.logDebug("mainClass: " + mainClass);
 
         workDir = workingDir;
-        System.err.println("workDir: " + workDir);
+        Logger.logDebug("workDir: " + workDir);
 
         SVMBridge.appName = appName;
-        System.err.println("appName: " + SVMBridge.appName);
+        Logger.logDebug("appName: " + SVMBridge.appName);
 
         classDir = gClassdir;
-        System.err.println("classDir: " + classDir);
+        Logger.logDebug("classDir: " + classDir);
 
         String suffix = config instanceof LinuxTargetConfiguration ? "linux" :
                 config instanceof MacosTargetConfiguration ? "mac" : "ios";
@@ -271,13 +272,13 @@ public class SVMBridge {
         compileBuilder.directory(workDir.toFile());
         compileBuilder.redirectErrorStream(true);
         String compileCmd = String.join(" ", compileBuilder.command());
-        System.err.println("compileCmd = " + compileCmd);
+        Logger.logDebug("compileCmd = " + compileCmd);
         FileOps.createScript(workDir.resolve("compile.sh"), compileCmd);
 
         Process compileProcess = compileBuilder.start();
         FileOps.mergeProcessOutput(compileProcess.getInputStream());
         int result = compileProcess.waitFor();
-        System.err.println("result of compile = " + result);
+        Logger.logDebug("result of compile = " + result);
         if (result != 0) {
             throw new RuntimeException("Error compiling");
         }

@@ -325,22 +325,4 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
         this.target = target;
     }
 
-    static void logInfo(String s) {
-        System.err.println(s);
-    }
-
-    static void logDebug(String s) {
-        System.err.println(s);
-    }
-
-    static void logSevere(String s) {
-        System.err.println(s);
-    }
-
-    static void logSevere(Throwable ex, String s) {
-        logSevere(s);
-        ex.printStackTrace();
-        throw new RuntimeException ("Severe Error " + ex);
-    }
-
 }

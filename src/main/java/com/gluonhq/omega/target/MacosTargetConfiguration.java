@@ -32,6 +32,7 @@ import com.dd.plist.PropertyListParser;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
+import com.gluonhq.omega.util.Logger;
 import com.gluonhq.omega.util.NSDictionaryEx;
 import com.gluonhq.omega.util.XcodeUtil;
 
@@ -406,7 +407,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileApplication() throws Exception {
-        logDebug("Compiling MacOS application");
+        Logger.logDebug("Compiling MacOS application");
         SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
     }
 
@@ -414,7 +415,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     public void compileAdditionalSources() throws Exception {
         Path workDir = this.gvmPath.getParent().resolve("mac").resolve(appName);
         Files.createDirectories(workDir);
-        logDebug("Compiling additional sources to " + workDir);
+        Logger.logDebug("Compiling additional sources to " + workDir);
         FileOps.copyResource("/native/macosx/AppDelegate.m", workDir.resolve("AppDelegate.m"));
         FileOps.copyResource("/native/macosx/AppDelegate.h", workDir.resolve("AppDelegate.h"));
         FileOps.copyResource("/native/macosx/launcher.c", workDir.resolve("launcher.c"));
@@ -430,8 +431,8 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         FileOps.mergeProcessOutput(p.getInputStream());
         int result = p.waitFor();
         String proccmds = String.join(" ", processBuilder.command());
-        logDebug("proccmds = " + proccmds);
-        logDebug("Result of compile = "+result);
+        Logger.logDebug("proccmds = " + proccmds);
+        Logger.logDebug("Result of compile = "+result);
         if (result != 0) {
             throw new RuntimeException("Error compiling additional sources");
         }
@@ -442,15 +443,15 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         super.link(workDir, appName, target);
         SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
-        logDebug("got o at: " + o.toString());
+        Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
         if ("llvm".equals(Omega.getConfig().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
-            System.err.println("got llvm at: " + o2.toString());
+            Logger.logDebug("got llvm at: " + o2.toString());
         }
 
-        logDebug("Linking at " + workDir.toString());
+        Logger.logDebug("Linking at " + workDir.toString());
         Path gvmPath = workDir.getParent();
         appPath = gvmPath.getParent().resolve("mac").resolve(appName + ".app");
         Files.createDirectories(appPath.resolve("Contents").resolve("MacOS"));
@@ -483,14 +484,14 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
         String linkcmds = String.join(" ", linkBuilder.command());
-        logDebug("linkcmds = " + linkcmds);
+        Logger.logDebug("linkcmds = " + linkcmds);
         FileOps.createScript(gvmPath.resolve("link.sh"), linkcmds);
 
         Process linkProcess = linkBuilder.start();
         FileOps.mergeProcessOutput(linkProcess.getInputStream());
         int result = linkProcess.waitFor();
 
-        logDebug("result of linking = " + result);
+        Logger.logDebug("result of linking = " + result);
         if (result != 0) {
             throw new RuntimeException("Error linking");
         }
@@ -508,7 +509,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     public void run(Path workDir, String appName, String target) throws Exception {
         super.run(workDir, appName, target);
 
-        logDebug("Running at " + workDir.toString());
+        Logger.logDebug("Running at " + workDir.toString());
         Path mac = workDir.resolve("mac").resolve(appName + ".app").resolve("Contents").resolve("MacOS").resolve(appName);
         ProcessBuilder runBuilder = new ProcessBuilder(mac.toString());
         runBuilder.redirectErrorStream(true);
@@ -523,7 +524,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         Path plist = rootPath.resolve("Info.plist");
         boolean inited = true;
         if (! plist.toFile().exists()) {
-            logDebug("Copy Info.plist to " + plist.toString());
+            Logger.logDebug("Copy Info.plist to " + plist.toString());
             FileOps.copyResource("/native/macosx/assets/Info.plist", plist);
             FileOps.copyResource("/native/macosx/assets/PkgInfo",
                     rootPath.resolve("PkgInfo"));
@@ -567,7 +568,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
                                 NSDictionary d = (NSDictionary) PropertyListParser.parse(f.toFile());
                                 d.keySet().forEach(k -> orderedDict.put(k, d.get(k)));
                             } catch (Exception e) {
-                                logSevere(e, "Error reading plist");
+                                Logger.logSevere(e, "Error reading plist");
                             }
                         });
             }
@@ -576,11 +577,11 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
                     .filter(e -> "CFBundleIdentifier".equals(e.getKey()))
                     .findFirst()
                     .ifPresent(e -> {
-                            logDebug("BUNDLE ID = " + e.getValue().toString());
+                            Logger.logDebug("BUNDLE ID = " + e.getValue().toString());
                             bundleId = e.getValue().toString();
                     });
         } catch (Exception ex) {
-            logSevere(ex, "Could not process property list");
+            Logger.logSevere(ex, "Could not process property list");
         }
     }
 
@@ -589,7 +590,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         if (! resourcePath.toFile().exists()) {
             return;
         }
-        logDebug("Calling actool for resources at " + resourcePath.toString());
+        Logger.logDebug("Calling actool for resources at " + resourcePath.toString());
         Files.walk(resourcePath, 1).forEach(p -> {
             if (Files.isDirectory(p)) {
                 if (p.toString().endsWith(".xcassets")) {
@@ -597,7 +598,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
                         actool(p, "macosx",
                                 minOSVersion, Arrays.asList("mac"), "Contents/Resources");
                     } catch (Exception ex) {
-                        logSevere(ex, "actool failed for directory " + p);
+                        Logger.logSevere(ex, "actool failed for directory " + p);
                     }
                 }
             } else {

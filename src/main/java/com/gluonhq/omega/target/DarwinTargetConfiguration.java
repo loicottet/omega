@@ -27,6 +27,7 @@
  */
 package com.gluonhq.omega.target;
 
+import com.gluonhq.omega.util.Logger;
 import com.gluonhq.omega.util.ProcessArgs;
 import com.gluonhq.omega.util.XcodeUtil;
 
@@ -80,7 +81,7 @@ abstract class DarwinTargetConfiguration extends AbstractTargetConfiguration {
             }
 
             String absolutePath = listFiles[0].getAbsolutePath();
-            logDebug("Sdk path: " + absolutePath + ", for type " + name);
+            Logger.logDebug("Sdk path: " + absolutePath + ", for type " + name);
             return absolutePath;
         }
     }
@@ -112,13 +113,13 @@ abstract class DarwinTargetConfiguration extends AbstractTargetConfiguration {
             try {
                 Files.walk(partialPListDir).forEach(f -> f.toFile().delete());
             } catch (IOException ex) {
-                logSevere("Error removing files from " + partialPListDir.toString() + ": " + ex);
+                Logger.logSevere("Error removing files from " + partialPListDir.toString() + ": " + ex);
             }
         }
         try {
             Files.createDirectories(partialPListDir);
         } catch (IOException ex) {
-            logSevere("Error creating " + partialPListDir.toString() + ": " + ex);
+            Logger.logSevere("Error creating " + partialPListDir.toString() + ": " + ex);
         }
 
         File partialInfoPlist = File.createTempFile(resourcePath.getFileName().toString() + "_", ".plist", partialPListDir.toFile());
@@ -140,13 +141,13 @@ abstract class DarwinTargetConfiguration extends AbstractTargetConfiguration {
 
         StringBuilder sb = new StringBuilder();
         pb.command().forEach(a -> sb.append(a).append(" "));
-        logDebug("command to actool: " + sb);
+        Logger.logDebug("command to actool: " + sb);
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
         int result = p.waitFor();
 
-        logDebug("result of actool = " + result);
+        Logger.logDebug("result of actool = " + result);
         if (result != 0) {
             throw new RuntimeException("Error actool");
         }

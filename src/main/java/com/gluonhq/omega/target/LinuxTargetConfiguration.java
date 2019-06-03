@@ -30,6 +30,7 @@ package com.gluonhq.omega.target;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.FileOps;
+import com.gluonhq.omega.util.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,14 +98,14 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     }
 
     public void compileApplication() throws Exception {
-        System.err.println("Compiling application for Linux");
+        Logger.logDebug("Compiling application for Linux");
         SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
     }
 
     @Override
     public void compileAdditionalSources() throws Exception {
         Path workDir = this.gvmPath.getParent().resolve("linux").resolve(appName);
-        System.err.println("Compiling additional sources to " + workDir);
+        Logger.logDebug("Compiling additional sources to " + workDir);
         Files.createDirectories(workDir);
         FileOps.copyResource("/native/linux/launcher.c", workDir.resolve("launcher.c"));
         FileOps.copyResource("/native/linux/thread.c", workDir.resolve("thread.c"));
@@ -118,7 +119,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         Process p = processBuilder.start();
         FileOps.mergeProcessOutput(p.getInputStream());
         int result = p.waitFor();
-        System.err.println("Result of compile = "+result);
+        Logger.logDebug("Result of compile = "+result);
         if (result != 0) {
             throw new RuntimeException("Error compiling additional sources");
         }
@@ -127,18 +128,18 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     @Override
     public void link(Path workDir, String appName, String target) throws Exception {
         super.link(workDir, appName, target);
-        System.err.println("Linking into "+appName);
+        Logger.logDebug("Linking into "+appName);
         SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
-        System.err.println("got o at: " + o.toString());
+        Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
         if ("llvm".equals(Omega.getConfig().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
-            System.err.println("got llvm at: " + o2.toString());
+            Logger.logDebug("got llvm at: " + o2.toString());
         }
 
-        System.err.println("Linking at " + workDir.toString());
+        Logger.logDebug("Linking at " + workDir.toString());
         Path gvmPath = workDir.getParent();
         Path linux = gvmPath.getParent().resolve("linux").resolve(appName);
 
@@ -187,13 +188,13 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
         String linkcmds = String.join(" ", linkBuilder.command());
-        logDebug("linkcmds = " + linkcmds);
+        Logger.logDebug("linkcmds = " + linkcmds);
         FileOps.createScript(gvmPath.resolve("link.sh"), linkcmds);
 
         Process linkProcess = linkBuilder.start();
         FileOps.mergeProcessOutput(linkProcess.getInputStream());
         int result = linkProcess.waitFor();
-        System.err.println("result of linking = "+result);
+        Logger.logDebug("result of linking = "+result);
         if (result != 0) {
             throw new RuntimeException("Error linking");
         }
@@ -203,7 +204,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     public void run(Path workDir, String appName, String target) throws Exception {
         super.run(workDir, appName, target);
 
-        System.err.println("Running at " + workDir.toString());
+        Logger.logDebug("Running at " + workDir.toString());
         Path mac = workDir.resolve("linux").resolve(appName);
         ProcessBuilder runBuilder = new ProcessBuilder(mac.toString() + "/" + appName);
         runBuilder.directory(workDir.toFile());

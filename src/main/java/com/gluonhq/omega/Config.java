@@ -40,6 +40,7 @@ public class Config {
     private String StaticRoot;
     private boolean useJavaFX = true;
     private boolean enableCheckHash = true;
+    private boolean verbose = false;
 
     private String target;
     private String backend;
@@ -152,6 +153,14 @@ public class Config {
 
     public boolean isEnableCheckHash() {
         return enableCheckHash;
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    public boolean isVerbose() {
+        return verbose;
     }
 
     /**
