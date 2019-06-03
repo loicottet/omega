@@ -186,7 +186,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     @Override
     public List<String> getReleaseSymbolsList() {
         ArrayList<String> answer = new ArrayList<>();
-//        answer.addAll(super.getReleaseSymbolsList());
+        if (isSimulator()) {
+            answer.addAll(super.getReleaseSymbolsList());
+        }
         answer.addAll(releaseSymbolsIOSList);
         if (USE_JAVAFX) {
             answer.addAll(releaseSymbolsFXIOSList);
