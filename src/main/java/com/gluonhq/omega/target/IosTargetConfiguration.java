@@ -645,13 +645,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             boolean res = p.waitFor(10, TimeUnit.SECONDS);
             Logger.logDebug("RES for signing = " + res);
         } catch (InterruptedException ex) {
-            Logger.logDebug("Error processing codesing " + ex.getMessage());
-            ex.printStackTrace();
+            Logger.logSevere(ex,"Error processing codesing " + ex.getMessage());
             return false;
         }
 
         if (!validateCodesign(target)) {
-            Logger.logDebug("Codesign validation failed");
+            Logger.logSevere("Codesign validation failed");
             return false;
         }
 
@@ -673,8 +672,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             boolean res = p.waitFor(5, TimeUnit.SECONDS);
             Logger.logDebug("RES for validateCodesign = " + res);
         } catch (InterruptedException ex) {
-            Logger.logDebug("Error processing validateCodesign " + ex.getMessage());
-            ex.printStackTrace();
+            Logger.logSevere(ex,"Error processing validateCodesign " + ex.getMessage());
             return false;
         }
         Logger.logDebug("Validation codesign result: " + validate);
@@ -823,6 +821,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             Files.copy(exePath.toPath(), new File(indexedAppDir, executable).toPath());
             FileOps.copyDirectory(dsymDir.toPath(), indexedDSymDir.toPath());
         } catch (IOException e) {
+            Logger.logDebug("Error " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -939,10 +938,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                                     int n = 0;
                                     int totsize = 0;
                                     while ((n = is.read(buffer)) != -1) {
-//                                fileWrite(fd, buffer, 0, n);
-                                        Logger.logDebug("read from buffer: "+n);
                                         int written = mobileDeviceBridge.writeBytes(afcClientPointer, fd, buffer, n);
-                                        Logger.logDebug("written: "+written);
                                         totsize = totsize + written;
                                     }
                                     Logger.logDebug("Wrote " + totsize + " bytes for file " + deviceFile);
@@ -1106,7 +1102,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                 try {
                     while (keepTrying) {
                         keepTrying = false;
-                        System.out.println("launch Internal in thread");
+                        Logger.logDebug("launch Internal in thread");
                         Pointer lockDown = lockDown();
                         String appPath = getAppPath(lockDown, bundleId);
                         Object pv = mobileDeviceBridge.getValue(lockDown, null, "ProductVersion");
@@ -1124,7 +1120,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                             deviceIO.rerouteIO();
                         } catch (DeviceLockedException dle) {
                             //    unlock(lockDown);
-                            System.out.println("Device locked! Press ENTER to try again");
+                            Logger.logSevere("Device locked! Press ENTER to try again");
                             System.in.read();
                             keepTrying = true;
                         }
@@ -1132,8 +1128,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     }
                     l.countDown();
                 } catch (Throwable e) {
-                    System.out.println("ERROR! " + e);
-                    e.printStackTrace();
+                    Logger.logSevere(e, "ERROR! " + e);
                 }
             }
         };
