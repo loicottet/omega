@@ -71,6 +71,8 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.glass.ui.Application",
             "com.sun.glass.ui.Clipboard",
             "com.sun.glass.ui.Cursor",
+            "com.sun.glass.ui.Menu",
+            "com.sun.glass.ui.MenuItem$Callback",
             "com.sun.glass.ui.Pixels",
             "com.sun.glass.ui.Screen",
             "com.sun.glass.ui.Size",
@@ -249,6 +251,8 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
             "com.sun.xml.internal.stream.XMLInputFactoryImpl",
             "com.sun.glass.ui.EventLoop",
             "com.sun.glass.ui.Application",
+            "com.sun.glass.ui.Menu",
+            "com.sun.glass.ui.MenuItem$Callback",
             "com.sun.glass.ui.View",
             "com.sun.glass.ui.Size"
     ));
