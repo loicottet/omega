@@ -121,14 +121,14 @@ struct dirent* readdir$INODE64(DIR *dirp) {
 DIR* opendir$INODE64(const char* dirname) {
     NSLog(@"%@", [NSThread callStackSymbols]);
 
-    fprintf(stderr, "[JVDBG] opendir asked\n");
+    fprintf(stderr, "[JVDBG] opendir$INODE64 asked for %s and delegated to opendir\n", dirname);
     return opendir(dirname);
 }
 
 int stat$INODE64(const char *pathname, struct stat *statbuf) {
     NSLog(@"%@", [NSThread callStackSymbols]);
 
-    fprintf(stderr, "[JVDBG] stat asked\n");
+    fprintf(stderr, "[JVDBG] stat$INODE64 asked for %s and delegated to stat\n", pathname);
     return stat(pathname, statbuf);
 }
 
