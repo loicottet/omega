@@ -127,7 +127,7 @@ public class Config {
 
     /**
      * Sets the LLC directory by the user
-     * @param llcPath the directory (e.g $user/Downloads/llclib) that contains LLC
+     * @param llcPath the directory (e.g "$user/Downloads/llclib") that contains LLC
      */
     public void setLlcPath(String llcPath) {
         this.llcPath = llcPath;
