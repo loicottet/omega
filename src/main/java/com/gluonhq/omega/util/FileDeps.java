@@ -135,8 +135,8 @@ public class FileDeps {
 
         if (! Files.isDirectory(javaStatic)) {
             LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
-            downloadJavaStatic = true;
-        } else {
+            downloadJavaStatic = config.isUseJNI();
+        } else if (config.isUseJNI()) {
             String path = javaStatic.toString();
             if (JAVA_FILES.stream()
                     .map(s -> new File(path, s))
