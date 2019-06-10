@@ -47,6 +47,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -56,7 +57,7 @@ public class FileDeps {
 
     private static final Logger LOGGER = Logger.getLogger(FileDeps.class.getName());
 
-    private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${target}-${version}.zip";
+    private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${host}-${version}.zip";
     private static final String URL_JAVA_STATIC_SDK = "http://download2.gluonhq.com/omega/javastaticsdk/${target}-libs-${version}.zip";
     private static final String URL_JAVAFX_STATIC_SDK = "http://download2.gluonhq.com/omega/javafxstaticsdk/${target}-libsfx-${version}.zip";
 
@@ -219,8 +220,17 @@ public class FileDeps {
 
     private static void downloadGraalZip(Path omegaPath, Config config) throws IOException {
         LOGGER.info("Process zip graalLibs");
+        String osname = System.getProperty("os.name");
+        String host;
+        if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
+            host = "linux";
+        } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
+            host = "darwin";
+        } else {
+            throw new RuntimeException("Host " + osname + " not supported");
+        }
         processZip(URL_GRAAL_LIBS
-                        .replace("${target}", Omega.getTarget(config))
+                        .replace("${host}", host)
                         .replace("${version}", config.getGraalLibsVersion()),
                 omegaPath.resolve("graallibs-${version}.zip".replace("${version}", config.getGraalLibsVersion())),
                 "graalLibs", config.getGraalLibsVersion(), "graalLibs.md5");

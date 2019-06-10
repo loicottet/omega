@@ -1188,8 +1188,8 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             if (Files.isDirectory(p)) {
                 if (p.toString().endsWith(".xcassets")) {
                     try {
-                        Logger.logDebug("Calling actool for " + p.toString());
-                        actool(p, isSimulator() ? "iphonesimulator" :"iphoneos",
+                        Logger.logDebug("Calling verifyAssetCatalog for " + p.toString());
+                        verifyAssetCatalog(p, isSimulator() ? "iphonesimulator" :"iphoneos",
                                 minOSVersion,
                                 Arrays.asList("iphone", "ipad"), "");
                     } catch (Exception ex) {
