@@ -188,17 +188,19 @@ public class SVMBridge {
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
-
-        if (configuration.isCrossCompile()) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
-            linkedList.add("-Dsvm.targetArch=arm");
-        } else if (Omega.macHost) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
-        } else if (Omega.linux) {
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
-        } else {
-            // Set platform for iOS sim
-            linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_ARM64");
+System.err.println("USING JNI??? "+Omega.getConfig().isUseJNI());
+        if (Omega.getConfig().isUseJNI()) {
+            if (configuration.isCrossCompile()) {
+                linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
+                linkedList.add("-Dsvm.targetArch=arm");
+            } else if (Omega.macHost) {
+                linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
+            } else if (Omega.linux) {
+                linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
+            } else {
+                // Set platform for iOS sim
+                linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
+            }
         }
         if (USE_LLVM) {
             // TODO: Set correct path for this library
