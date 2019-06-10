@@ -36,6 +36,7 @@ public class Config {
     private String javafxStaticSdkVersion;
     private String graalLibsRoot;
     private String graalLibsUserPath;
+    private String llcPath;
     private String JavaFXRoot;
     private String StaticRoot;
     private boolean useJNI = true;
@@ -118,6 +119,18 @@ public class Config {
      */
     public void setGraalLibsUserPath(String graalLibsUserPath) {
         this.graalLibsUserPath = graalLibsUserPath;
+    }
+
+    public String getLlcPath() {
+        return llcPath;
+    }
+
+    /**
+     * Sets the LLC directory by the user
+     * @param llcPath the directory (e.g $user/Downloads/llclib) that contains LLC
+     */
+    public void setLlcPath(String llcPath) {
+        this.llcPath = llcPath;
     }
 
     public String getJavaFXRoot() {
