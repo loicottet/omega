@@ -38,7 +38,7 @@ public class Config {
     private String graalLibsUserPath;
     private String JavaFXRoot;
     private String StaticRoot;
-    private boolean useJNI = false;
+    private boolean useJNI = true;
     private boolean useJavaFX = true;
     private boolean enableCheckHash = true;
     private boolean verbose = false;

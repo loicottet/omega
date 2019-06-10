@@ -188,7 +188,6 @@ public class SVMBridge {
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
-System.err.println("USING JNI??? "+Omega.getConfig().isUseJNI());
         if (Omega.getConfig().isUseJNI()) {
             if (configuration.isCrossCompile()) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
