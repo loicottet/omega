@@ -197,9 +197,6 @@ public class SVMBridge {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
             } else if (Omega.linux) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
-            } else {
-                // Set platform for iOS sim
-                linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
             }
         } else {
             // if we don't use JNI, go with the default platform unless target arch != build arch
