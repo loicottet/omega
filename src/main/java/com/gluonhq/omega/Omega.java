@@ -87,7 +87,7 @@ public class Omega {
                 .map(Paths::get)
                 .collect(Collectors.toList());
 
-        TargetConfiguration targetConfig = getTargetConfiguration(target);
+        TargetConfiguration targetConfig = getTargetConfiguration(config, target);
         targetConfig.compile(gvmPath, classPath, config.getMainClassName(), config.getAppName(), target);
     }
 
@@ -103,7 +103,7 @@ public class Omega {
         prepareConfig(config);
         prepareDirs(buildRoot);
 
-        TargetConfiguration targetConfig = getTargetConfiguration(target);
+        TargetConfiguration targetConfig = getTargetConfiguration(config, target);
         targetConfig.link(workDir, config.getAppName(), target);
     }
 
@@ -118,7 +118,7 @@ public class Omega {
         prepareConfig(config);
         prepareDirs(workDir.toString());
 
-        TargetConfiguration targetConfig = getTargetConfiguration(target);
+        TargetConfiguration targetConfig = getTargetConfiguration(config, target);
         targetConfig.run(workDir, config.getAppName(), target);
     }
 
@@ -255,18 +255,18 @@ public class Omega {
         setConfig(config);
     }
 
-    private static TargetConfiguration getTargetConfiguration(String target) {
-        TargetConfiguration config;
+    private static TargetConfiguration getTargetConfiguration(Config config, String target) {
+        TargetConfiguration targetConfiguration;
         if (target.startsWith("ios")) {
-            config = new IosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("ios"));
+            targetConfiguration = new IosTargetConfiguration(config, omegaPath.getParent().getParent().resolve("src").resolve("ios"));
         } else if (macHost) {
-            config = new MacosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("mac"));
+            targetConfiguration = new MacosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("mac"));
         } else if (linux) {
-            config = new LinuxTargetConfiguration();
+            targetConfiguration = new LinuxTargetConfiguration();
         } else {
             throw new RuntimeException("target not found: "+target);
         }
-        return config;
+        return targetConfiguration;
     }
 
 }
