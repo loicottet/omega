@@ -208,7 +208,7 @@ public class SVMBridge {
         if (USE_LLVM) {
             String llcPath = Omega.getConfig().getLlcPath();
             if (llcPath == null || llcPath.isEmpty()) {
-                llcPath = Omega.getConfig().getGraalLibsRoot();
+                llcPath = Path.of(Omega.getConfig().getGraalLibsRoot()).getParent().resolve("llvm").toString();
             }
             linkedList.add("-Dsvm.llvm.root=" + llcPath);
         }
