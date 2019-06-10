@@ -202,6 +202,23 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         return answer;
     }
 
+    private List<String> getJavaFXSymbols() {
+        List<String> answer = new ArrayList();
+        try {
+            InputStream is = IosTargetConfiguration.class.getResourceAsStream("/symbols/ios-javafx.symbols");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String entry = br.readLine();
+            while (entry != null) {
+                answer.add(entry);
+                entry = br.readLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException ("fatal, no javafx symbols could be created: ",e);
+        }
+        return answer;
+    }
+
     @Override
     public List<String> getReleaseSymbolsList() {
         ArrayList<String> answer = new ArrayList<>();
@@ -210,7 +227,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         }
         answer.addAll(releaseSymbolsIOSList);
         if (USE_JAVAFX) {
-            answer.addAll(releaseSymbolsFXIOSList);
+            answer.addAll(getJavaFXSymbols());
         }
         return answer;
     }
@@ -286,7 +303,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     public void link(Path workDir, String appName, String target) throws Exception {
         super.link(workDir, appName, target);
         setupArch(target);
-        SVMBridge.linkSetup();
+        // SVMBridge init is called before we enter this function
+        // should be refactored to never call this
+        // SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
         Logger.logDebug("got o at: " + o.toString());
         // LLVM
@@ -321,9 +340,11 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
         linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
 
-        if (USE_JAVAFX) {
-            javafxLibs.forEach(name ->
-                    linkBuilder.command().add("-Wl,-all_load," + SVMBridge.JFXSDK + "/lib/lib" + name + ".a"));
+        if (!omegaConfig.isUseJNI()) {
+             if (USE_JAVAFX) {
+                 javafxLibs.forEach(name ->
+                         linkBuilder.command().add("-Wl,-all_load," + SVMBridge.JFXSDK + "/lib/lib" + name + ".a"));
+            }
         }
 
         Files.list(libPath)
@@ -341,12 +362,16 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         }
         linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + (isArchAmd64() ? "darwin-amd64" : "darwin-arm64"));
         linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
-        if (USE_JAVAFX) {
+        if (omegaConfig.isUseJNI() && USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
         }
         linkBuilder.command().addAll(javaCommonLibs);
         if (omegaConfig.isUseJNI()) {
             linkBuilder.command().addAll(javaJNILibs);
+        }
+        if (USE_JAVAFX) {
+            javafxLibs.forEach(name ->
+                    linkBuilder.command().add("-l" + name));
         }
         linkBuilder.command().addAll(frameworkLibs);
 
