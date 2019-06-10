@@ -38,6 +38,7 @@ public class Config {
     private String graalLibsUserPath;
     private String JavaFXRoot;
     private String StaticRoot;
+    private boolean useJNI = true;
     private boolean useJavaFX = true;
     private boolean enableCheckHash = true;
     private boolean verbose = false;
@@ -141,6 +142,14 @@ public class Config {
      */
     public void setStaticRoot(String staticRoot) {
         StaticRoot = staticRoot;
+    }
+
+    public boolean isUseJNI() {
+        return useJNI;
+    }
+
+    public void setUseJNI(boolean useJNI) {
+        this.useJNI = useJNI;
     }
 
     public boolean isUseJavaFX() {
