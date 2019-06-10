@@ -206,8 +206,11 @@ public class SVMBridge {
             }
         }
         if (USE_LLVM) {
-            // TODO: Set correct path for this library
-            linkedList.add("-Dsvm.llvm.root=" + Omega.getConfig().getStaticRoot() + "/llclib");
+            String llcPath = Omega.getConfig().getLlcPath();
+            if (llcPath == null || llcPath.isEmpty()) {
+                llcPath = Path.of(Omega.getConfig().getGraalLibsRoot()).getParent().resolve("llvm").toString();
+            }
+            linkedList.add("-Dsvm.llvm.root=" + llcPath);
         }
         linkedList.add("-Xdebug");
         linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
