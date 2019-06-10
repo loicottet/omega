@@ -159,9 +159,20 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "Default-375w-667h@2x~iphone.png", "Default-414w-736h@3x~iphone.png", "Default-portrait@2x~ipad.png",
             "Default-375w-812h-landscape@3x~iphone.png", "Default-568h@2x~iphone.png", "Default-portrait~ipad.png",
             "Default-375w-812h@3x~iphone.png", "Default-landscape@2x~ipad.png", "Default@2x~iphone.png",
-            "Default-414w-736h-landscape@3x~iphone.png", "Default-landscape~ipad.png", "iTunesArtwork",
+            "Default-414w-736h-landscape@3x~iphone.png", "Default-414w-896h@3x~iphone.png", "Default-414w-896h-landscape@3x~iphone.png",
+            "Default-landscape~ipad.png", "iTunesArtwork",
             "iTunesArtwork@2x"
     ));
+
+    private static final List<String> iconAssets = new ArrayList<>(Arrays.asList(
+            "Contents.json", "Gluon-app-store-icon-1024@1x.png", "Gluon-ipad-app-icon-76@1x.png", "Gluon-ipad-app-icon-76@2x.png",
+            "Gluon-ipad-notifications-icon-20@1x.png", "Gluon-ipad-notifications-icon-20@2x.png", "Gluon-ipad-notifications-icon-20@2x.png",
+            "Gluon-ipad-pro-app-icon-83.5@2x.png", "Gluon-ipad-settings-icon-29@1x.png", "Gluon-ipad-settings-icon-29@2x.png",
+            "Gluon-ipad-spotlight-icon-40@1x.png","Gluon-ipad-spotlight-icon-40@2x.png","Gluon-iphone-app-icon-60@2x.png",
+            "Gluon-iphone-app-icon-60@3x.png","Gluon-iphone-notification-icon-20@2x.png", "Gluon-iphone-notification-icon-20@3x.png",
+            "Gluon-iphone-spotlight-icon-40@2x.png", "Gluon-iphone-spotlight-icon-40@3x.png", "Gluon-iphone-spotlight-settings-icon-29@2x.png",
+            "Gluon-iphone-spotlight-settings-icon-29@3x.png"
+            ));
 
     private final Config omegaConfig;
 
@@ -519,7 +530,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if (! plist.toFile().exists()) {
             Logger.logDebug("Copy Default-info.plist to " + plist.toString());
             FileOps.copyResource("/native/ios/Default-Info.plist", plist);
-            assets.forEach(a -> FileOps.copyResource("/native/ios/assets/" + a, rootPath.resolve("assets").resolve(a)));
+            assets.forEach(a -> FileOps.copyResource("/native/ios/assets/" + a,
+                    rootPath.resolve("assets").resolve(a)));
+            iconAssets.forEach(a -> FileOps.copyResource("/native/ios/assets/Assets.xcassets/AppIcon.appiconset/" + a,
+                    rootPath.resolve("assets").resolve("Assets.xcassets").resolve("AppIcon.appiconset").resolve(a)));
+            FileOps.copyResource("/native/ios/assets/Assets.xcassets/Contents.json",
+                    rootPath.resolve("assets").resolve("Assets.xcassets").resolve("Contents.json"));
             inited = false;
         }
         copyAssets();
