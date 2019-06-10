@@ -320,9 +320,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
-        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + "darwin-amd64");
-        // TODO: Use arm
-//        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + (isSimulator() ? "darwin-amd64" : "darwin-arm64"));
+        linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + (isArchAmd64() ? "darwin-amd64" : "darwin-arm64"));
         linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
         if (USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
@@ -340,7 +338,8 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         int result = linkProcess.waitFor();
         Logger.logDebug("result of linking = "+result);
         if (result != 0) {
-            throw new RuntimeException("Error linking");
+            Logger.logSevere ("Linking failed, non-fatal");
+            // throw new RuntimeException("Error linking");
         }
 
         appId = appName;
@@ -758,6 +757,15 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     private boolean isSimulator() {
         return ARCH_X86_64.equals(arch);
     }
+
+    private boolean isArchArm64() {
+        return ARCH_ARM64.equals(arch);
+    }
+
+    private boolean isArchAmd64() {
+        return ARCH_X86_64.equals(arch);
+    }
+
 
     private void generateDsym(final File dir, final String executable, boolean copyToIndexedDir) throws IOException {
         final File dsymDir = new File(dir.getParentFile(), dir.getName() + ".dSYM");
