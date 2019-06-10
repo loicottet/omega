@@ -133,27 +133,29 @@ public class FileDeps {
         Path javaStatic = Path.of(config.getStaticRoot());
         LOGGER.info("Processing JavaStatic dependencies at " + javaStatic.toString());
 
-        if (! Files.isDirectory(javaStatic)) {
-            LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
-            downloadJavaStatic = config.isUseJNI();
-        } else if (config.isUseJNI()) {
-            String path = javaStatic.toString();
-            if (JAVA_FILES.stream()
-                    .map(s -> new File(path, s))
-                    .anyMatch(f -> !f.exists())) {
-                LOGGER.info("jar file not found");
+        if (config.isUseJNI()) {
+            if (! Files.isDirectory(javaStatic)) {
+                LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
                 downloadJavaStatic = true;
-            } else if (config.isEnableCheckHash()) {
-                LOGGER.info("Checking java static sdk hashes");
-                Map<String, String> hashes = getHashMap(javaStatic.getParent().toString() + File.separator + "javaStaticSdk-" + target + ".md5");
-                if (hashes == null) {
-                    LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/javaStaticSdk-" + target + ".md5 not found");
-                    downloadJavaStatic = true;
-                } else if (JAVA_FILES.stream()
+            } else {
+                String path = javaStatic.toString();
+                if (JAVA_FILES.stream()
                         .map(s -> new File(path, s))
-                        .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
-                    LOGGER.info("jar file has invalid hashcode");
+                        .anyMatch(f -> !f.exists())) {
+                    LOGGER.info("jar file not found");
                     downloadJavaStatic = true;
+                } else if (config.isEnableCheckHash()) {
+                    LOGGER.info("Checking java static sdk hashes");
+                    Map<String, String> hashes = getHashMap(javaStatic.getParent().toString() + File.separator + "javaStaticSdk-" + target + ".md5");
+                    if (hashes == null) {
+                        LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/javaStaticSdk-" + target + ".md5 not found");
+                        downloadJavaStatic = true;
+                    } else if (JAVA_FILES.stream()
+                            .map(s -> new File(path, s))
+                            .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
+                        LOGGER.info("jar file has invalid hashcode");
+                        downloadJavaStatic = true;
+                    }
                 }
             }
         }
