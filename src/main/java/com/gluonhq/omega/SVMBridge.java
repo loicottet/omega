@@ -188,6 +188,7 @@ public class SVMBridge {
         linkedList.add("-Duser.country=US");
         linkedList.add("-Duser.language=en");
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
+        // If we use JNI, always set the platform to InternalPlatform
         if (Omega.getConfig().isUseJNI()) {
             if (configuration.isCrossCompile()) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
@@ -199,6 +200,12 @@ public class SVMBridge {
             } else {
                 // Set platform for iOS sim
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
+            }
+        } else {
+            // if we don't use JNI, go with the default platform unless target arch != build arch
+            if (configuration.isCrossCompile()) { // we need a better check
+                linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
+                linkedList.add("-Dsvm.targetArch=arm");
             }
         }
         if (USE_LLVM) {
