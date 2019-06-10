@@ -86,25 +86,28 @@ abstract class DarwinTargetConfiguration extends AbstractTargetConfiguration {
         }
     }
 
-    void actool(Path resourcePath, String platform, String minOSVersion, List<String> devices, String output) throws Exception {
-        List<String> opts = new ArrayList<>();
+    void verifyAssetCatalog(Path resourcePath, String platform, String minOSVersion, List<String> devices, String output) throws Exception {
+        List<String> commandsList = new ArrayList<>();
+        commandsList.add("--output-format");
+        commandsList.add("human-readable-text");
+
         final String appIconSet = ".appiconset";
         final String launchImage = ".launchimage";
 
-        File inDir = resourcePath.toFile();
-        File outDir = new File(appPath.toFile(), output);
-        Files.createDirectories(outDir.toPath());
+        File inputDir = resourcePath.toFile();
+        File outputDir = new File(appPath.toFile(), output);
+        Files.createDirectories(outputDir.toPath());
         Files.walk(resourcePath).forEach(p -> {
             if (Files.isDirectory(p) && p.toString().endsWith(appIconSet)) {
                 String appIconSetName = p.getFileName().toString()
                         .substring(0, p.getFileName().toString().length() - appIconSet.length());
-                opts.add("--app-icon");
-                opts.add(appIconSetName);
+                commandsList.add("--app-icon");
+                commandsList.add(appIconSetName);
             } else if (Files.isDirectory(p) && p.toString().endsWith(launchImage)) {
                 String launchImagesName = p.getFileName().toString()
                         .substring(0, p.getFileName().toString().length() - launchImage.length());
-                opts.add("--launch-image");
-                opts.add(launchImagesName);
+                commandsList.add("--launch-image");
+                commandsList.add(launchImagesName);
             }
         });
 
@@ -124,32 +127,36 @@ abstract class DarwinTargetConfiguration extends AbstractTargetConfiguration {
 
         File partialInfoPlist = File.createTempFile(resourcePath.getFileName().toString() + "_", ".plist", partialPListDir.toFile());
 
-        opts.add("--output-partial-info-plist");
-        opts.add(partialInfoPlist.toString());
+        commandsList.add("--output-partial-info-plist");
+        commandsList.add(partialInfoPlist.toString());
 
-        opts.add("--platform");
-        opts.add(platform);
+        commandsList.add("--platform");
+        commandsList.add(platform);
 
         String actoolForSdk = XcodeUtil.getCommandForSdk("actool", "iphoneos");
+        commandsList.add("--minimum-deployment-target");
+        commandsList.add(minOSVersion);
+        devices.forEach(device -> {
+            commandsList.add("--target-device");
+            commandsList.add(device);
+        });
 
-        ProcessArgs args = new ProcessArgs(actoolForSdk, "--output-format", "human-readable-text");
-        args.addAll(opts);
-        args.addAll("--minimum-deployment-target", minOSVersion);
-        devices.forEach(d -> args.addAll("--target-device", d));
-        args.addAll("--compress-pngs", "--compile", outDir.toString(), inDir.toString());
+        ProcessArgs args = new ProcessArgs(actoolForSdk);
+        args.addAll(commandsList);
+        args.addAll("--compress-pngs", "--compile", outputDir.toString(), inputDir.toString());
+
         ProcessBuilder pb = new ProcessBuilder(args.toList());
-
         StringBuilder sb = new StringBuilder();
         pb.command().forEach(a -> sb.append(a).append(" "));
-        Logger.logDebug("command to actool: " + sb);
+        Logger.logDebug("command to verifyAssetCatalog: " + sb);
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
         int result = p.waitFor();
 
-        Logger.logDebug("result of actool = " + result);
+        Logger.logDebug("result of verifyAssetCatalog = " + result);
         if (result != 0) {
-            throw new RuntimeException("Error actool");
+            throw new RuntimeException("Error verifyAssetCatalog");
         }
     }
 }

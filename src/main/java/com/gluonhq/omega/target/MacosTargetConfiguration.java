@@ -590,15 +590,15 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         if (! resourcePath.toFile().exists()) {
             return;
         }
-        Logger.logDebug("Calling actool for resources at " + resourcePath.toString());
+        Logger.logDebug("Calling verifyAssetCatalog for resources at " + resourcePath.toString());
         Files.walk(resourcePath, 1).forEach(p -> {
             if (Files.isDirectory(p)) {
                 if (p.toString().endsWith(".xcassets")) {
                     try {
-                        actool(p, "macosx",
+                        verifyAssetCatalog(p, "macosx",
                                 minOSVersion, Arrays.asList("mac"), "Contents/Resources");
                     } catch (Exception ex) {
-                        Logger.logSevere(ex, "actool failed for directory " + p);
+                        Logger.logSevere(ex, "verifyAssetCatalog failed for directory " + p);
                     }
                 }
             } else {
