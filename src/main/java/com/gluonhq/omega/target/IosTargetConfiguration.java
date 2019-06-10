@@ -33,6 +33,7 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
+import com.gluonhq.omega.Config;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
 import com.gluonhq.omega.util.DeviceIO;
@@ -138,9 +139,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "_Java_com_gluonhq*"
     );
 
-    private static final List<String> ioslibs = Arrays.asList(
-            "-lffi", "-lpthread","-lz", "-lstrictmath", "-llibchelper",
-            "-ljava", "-lnio", "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec",
+    private static final List<String> javaCommonLibs = Arrays.asList(
+            "-lpthread","-lz", "-lstrictmath");
+
+    private static final List<String> javaJNILibs = Arrays.asList("-ljava", "-lnio", 
+            "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec");
+
+    private static final List<String> frameworkLibs = Arrays.asList(
             "-Wl,-framework,Foundation", "-Wl,-framework,UIKit", "-Wl,-framework,CoreGraphics", "-Wl,-framework,MobileCoreServices",
             "-Wl,-framework,OpenGLES", "-Wl,-framework,CoreText", "-Wl,-framework,ImageIO",
             "-Wl,-framework,UserNotifications", "-Wl,-framework,CoreBluetooth", "-Wl,-framework,CoreLocation",
@@ -158,8 +163,11 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "iTunesArtwork@2x"
     ));
 
-    public IosTargetConfiguration(Path iosDir) {
+    private final Config omegaConfig;
+
+    public IosTargetConfiguration(Config config, Path iosDir) {
         this.rootPath = iosDir;
+        this.omegaConfig = config;
         try {
             Files.createDirectories(iosDir);
         } catch (IOException e) {
@@ -325,7 +333,11 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if (USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
         }
-        linkBuilder.command().addAll(ioslibs);
+        linkBuilder.command().addAll(javaCommonLibs);
+        if (omegaConfig.isUseJNI()) {
+            linkBuilder.command().addAll(javaJNILibs);
+        }
+        linkBuilder.command().addAll(frameworkLibs);
 
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
