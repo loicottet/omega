@@ -140,10 +140,10 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     );
 
     private static final List<String> javaCommonLibs = Arrays.asList(
-            "-lpthread","-lz", "-lstrictmath");
+            "-lpthread","-lz", "-lstrictmath", "-ljvm", "-llibchelper");
 
     private static final List<String> javaJNILibs = Arrays.asList("-ljava", "-lnio", 
-            "-lzip", "-lnet", "-ljvm", "-lj2pkcs11", "-lsunec");
+            "-lzip", "-lnet", "-lj2pkcs11", "-lsunec");
 
     private static final List<String> frameworkLibs = Arrays.asList(
             "-Wl,-framework,Foundation", "-Wl,-framework,UIKit", "-Wl,-framework,CoreGraphics", "-Wl,-framework,MobileCoreServices",
