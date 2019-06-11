@@ -146,6 +146,7 @@ int lstat$INODE64(const char *pathname, struct stat *statbuf) {
     return lstat(pathname, statbuf);
 }
 
+#ifdef AARCH64
 void sys_param_howmany() {
     fprintf(stderr, "sys_param_howmany NYI\n");
 }
@@ -161,3 +162,4 @@ void sys_select_FD_ZERO() {
 void getEnviron() {
     fprintf(stderr, "getEnviron NYI\n");
 }
+#endif
