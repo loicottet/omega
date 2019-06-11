@@ -37,4 +37,7 @@ public interface TargetConfiguration {
     void link(Path workDir, String appName, String target) throws Exception;
 
     void run(Path workDir, String appName, String target) throws Exception;
+
+    public List<String> getReleaseSymbolsList();
+
 }

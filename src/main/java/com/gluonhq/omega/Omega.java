@@ -102,8 +102,9 @@ public class Omega {
     public static void nativeLink(String buildRoot, Path workDir, Config config, String target) throws Exception {
         prepareConfig(config);
         prepareDirs(buildRoot);
-
         TargetConfiguration targetConfig = getTargetConfiguration(config, target);
+        SVMBridge.init();
+        SVMBridge.createReleaseSymbols(workDir.getParent(), targetConfig);
         targetConfig.link(workDir, config.getAppName(), target);
     }
 
