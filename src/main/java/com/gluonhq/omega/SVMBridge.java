@@ -556,25 +556,26 @@ public class SVMBridge {
 
     private static List<String> getNativeReleaseSymbolsList(Path libs) throws IOException {
         List<String> symbols = new ArrayList<>();
-        Files.list(libs)
-                .filter(p -> p.toString().endsWith(".a"))
-                .forEach(lib -> {
-                    ProcessBuilder pb = new ProcessBuilder("nm", "-Uj", lib.toString());
-                    try {
-                        Process p = pb.start();
-                        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                            String method;
-                            while ((method = br.readLine()) != null) {
-                                if (method.startsWith("_Java") || method.startsWith("_JNI_OnLoad")) {
-                                    symbols.add(method);
+        if (Files.exists(libs)) {
+            Files.list(libs)
+                    .filter(p -> p.toString().endsWith(".a"))
+                    .forEach(lib -> {
+                        ProcessBuilder pb = new ProcessBuilder("nm", "-Uj", lib.toString());
+                        try {
+                            Process p = pb.start();
+                            try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                                String method;
+                                while ((method = br.readLine()) != null) {
+                                    if (method.startsWith("_Java") || method.startsWith("_JNI_OnLoad")) {
+                                        symbols.add(method);
+                                    }
                                 }
                             }
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
+                    });
+        }
         return symbols;
     }
 }
