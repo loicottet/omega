@@ -35,10 +35,12 @@ import com.gluonhq.omega.util.FileDeps;
 import com.gluonhq.omega.util.FileOps;
 import com.gluonhq.omega.util.Logger;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -494,6 +496,9 @@ public class SVMBridge {
             for (String release : config.getReleaseSymbolsList()) {
                 bw.write(release.concat("\n"));
             }
+            for (String release : getNativeReleaseSymbolsList(wd.resolve("lib"))) {
+                bw.write(release.concat("\n"));
+            }
             for (String release : omegaConfig.getReleaseSymbolsList()) {
                 bw.write(release.concat("\n"));
             }
@@ -549,4 +554,27 @@ public class SVMBridge {
         return directoryToBeDeleted.delete();
     }
 
+    private static List<String> getNativeReleaseSymbolsList(Path libs) throws IOException {
+        List<String> symbols = new ArrayList<>();
+        Files.list(libs)
+                .filter(p -> p.toString().endsWith(".a"))
+                .forEach(lib -> {
+                    ProcessBuilder pb = new ProcessBuilder("nm", "-Uj", lib.toString());
+                    try {
+                        Process p = pb.start();
+                        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                            String method;
+                            while ((method = br.readLine()) != null) {
+                                if (method.startsWith("_Java") || method.startsWith("_JNI_OnLoad")) {
+                                    symbols.add(method);
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+        return symbols;
+    }
 }

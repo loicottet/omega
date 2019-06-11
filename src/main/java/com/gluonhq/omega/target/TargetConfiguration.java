@@ -38,6 +38,6 @@ public interface TargetConfiguration {
 
     void run(Path workDir, String appName, String target) throws Exception;
 
-    public List<String> getReleaseSymbolsList();
+    List<String> getReleaseSymbolsList();
 
 }
