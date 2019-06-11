@@ -30,6 +30,7 @@ package com.gluonhq.omega;
 import com.gluonhq.omega.target.AbstractTargetConfiguration;
 import com.gluonhq.omega.target.LinuxTargetConfiguration;
 import com.gluonhq.omega.target.MacosTargetConfiguration;
+import com.gluonhq.omega.target.TargetConfiguration;
 import com.gluonhq.omega.util.FileDeps;
 import com.gluonhq.omega.util.FileOps;
 import com.gluonhq.omega.util.Logger;
@@ -155,7 +156,6 @@ public class SVMBridge {
         createReflectionConfig(suffix);
         createJNIConfig(suffix);
 
-        createReleaseSymbols();
 
         setClassPath();
         setModulePath();
@@ -477,8 +477,9 @@ public class SVMBridge {
         }
     }
 
-    private static void createReleaseSymbols() throws Exception {
-        Path releaseSymbols = workDir.resolve("release.symbols");
+    static void createReleaseSymbols(Path wd, TargetConfiguration config) throws Exception {
+        Config omegaConfig = Omega.getConfig();
+        Path releaseSymbols = wd.resolve("release.symbols");
         File f = releaseSymbols.toFile();
         if (f.exists()) {
             f.delete();
@@ -487,9 +488,11 @@ public class SVMBridge {
             for (String release : config.getReleaseSymbolsList()) {
                 bw.write(release.concat("\n"));
             }
-            for (String release : CUSTOM_RELEASE_SYMBOL_LIST) {
+            for (String release : omegaConfig.getReleaseSymbolsList()) {
                 bw.write(release.concat("\n"));
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
