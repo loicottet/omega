@@ -96,9 +96,9 @@ public class FileOps {
         try {
             Files.createDirectories(destination.getParent());
             Files.copy(source, destination,  REPLACE_EXISTING);
-            System.err.println("Copied resource " + source + " to " + destination);
+            Logger.logDebug("Copied resource " + source + " to " + destination);
         } catch (IOException ex) {
-            System.err.println("Failed copying " + source + " to " + destination + ": " + ex);
+            Logger.logSevere("Failed copying " + source + " to " + destination + ": " + ex);
         }
         return destination;
     }

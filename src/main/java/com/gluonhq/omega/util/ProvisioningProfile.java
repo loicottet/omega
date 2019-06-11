@@ -73,7 +73,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
     private final List<String> certFingerprints = new LinkedList<>();
     private final Type type;
 
-    ProvisioningProfile(Path file, NSDictionaryEx dict) {
+    private ProvisioningProfile(Path file, NSDictionaryEx dict) {
         this.file = file;
         this.dict = dict;
         this.uuid = dict.getString("UUID");
@@ -98,7 +98,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
             try {
                 dict.getArray("ProvisionedDevices");
             } catch (Exception e) {
-                System.err.println("Error getting ProvisioninedDevices, ignore in thread "+Thread.currentThread());
+                Logger.logDebug("Error getting ProvisioninedDevices, ignore in thread " + Thread.currentThread());
             }
             if (provisionedDevices != null) {
                 type = Type.AdHoc;
@@ -106,7 +106,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
                 type = Type.AppStore;
             }
         }
-        System.out.println("created");
+        Logger.logDebug("created provisioning profile");
     }
 
     public Path getPath() {
@@ -155,7 +155,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
         //    System.out.println("Created provisioningprofile for "+file+" results in "+provisioningProfile);
             return provisioningProfile;
         } catch (Exception e) {
-            System.out.println("Error creating provisioningprofile for "+file);
+            Logger.logSevere("Error creating provisioningprofile for " + file);
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -187,14 +187,14 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
 
     private static ProvisioningProfile find(List<ProvisioningProfile> profiles, SigningIdentity signingIdentity, String bundleId, String origBundleId) {
         // Try a direct match first
-        System.out.println("provprofile asked, bid = " + bundleId + " and origbid = " + origBundleId);
+        Logger.logDebug("provisioning profile asked, bid = " + bundleId + " and origbid = " + origBundleId);
         ProvisioningProfile answer = null;
         for (ProvisioningProfile p : profiles) {
-            System.err.println("CONSIDER provprofile " + p);
+            Logger.logDebug("CONSIDER provprofile " + p);
             if (p.appId.equals(p.appIdPrefix + "." + bundleId)) {
                 for (String fp : p.certFingerprints) {
                     if (fp.equals(signingIdentity.fingerprint)) {
-                        System.err.println("YES, we have a MATCH!! " + p + " matches " + signingIdentity);
+                        Logger.logDebug("YES, we have a MATCH!! " + p + " matches " + signingIdentity);
                         answer = p;
                     } else {
                         //      System.err.println("APPIDS match, but fps not, fp = "+fp+" and sfp = "+signingIdentity.fingerprint);
@@ -218,11 +218,11 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
             }
         }
         if (answer == null) {
-            System.out.println("No provisioning profile found "
+            Logger.logInfo("No provisioning profile found "
                     + "matching signing identity '" + signingIdentity.name
                     + "' and app bundle ID '" + origBundleId + "'");
         }
-        System.out.println("will return PP " + answer);
+        Logger.logDebug("will return PP " + answer);
         return answer;
     }
 
