@@ -347,11 +347,6 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             }
         }
 
-        Files.list(libPath)
-                .filter(p -> p.toString().endsWith(".a"))
-                .forEach(p ->
-                    linkBuilder.command().add("-Wl,-all_load," + p.toString()));
-
         linkBuilder.command().add(appPath.toString() + "/AppDelegate.o");
         linkBuilder.command().add(appPath.toString() + "/main.o");
         linkBuilder.command().add(appPath.toString() + "/thread.o");
@@ -365,6 +360,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         if (omegaConfig.isUseJNI() && USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
         }
+        if (Files.list(libPath).count() > 0) {
+            linkBuilder.command().add("-L" + libPath.toString());
+        }
         linkBuilder.command().addAll(javaCommonLibs);
         if (omegaConfig.isUseJNI()) {
             linkBuilder.command().addAll(javaJNILibs);
@@ -373,6 +371,12 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             javafxLibs.forEach(name ->
                     linkBuilder.command().add("-l" + name));
         }
+        Files.list(libPath)
+                .map(p -> p.getFileName().toString())
+                .filter(s -> s.startsWith("lib") && s.endsWith(".a"))
+                .map(s -> s.substring(3, s.lastIndexOf(".")))
+                .forEach(s -> linkBuilder.command().add("-l" + s));
+
         linkBuilder.command().addAll(frameworkLibs);
 
         linkBuilder.directory(workDir.toFile());
