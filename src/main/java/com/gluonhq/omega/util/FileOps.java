@@ -218,11 +218,16 @@ public class FileOps {
                 }
             }
         }
+        setExecutionPermissions(script);
+        return;
+    }
+
+    public static void setExecutionPermissions(Path path) throws IOException {
         Set<PosixFilePermission> perms = new HashSet<>();
         perms.add(PosixFilePermission.OWNER_READ);
         perms.add(PosixFilePermission.OWNER_WRITE);
         perms.add(PosixFilePermission.OWNER_EXECUTE);
 
-        Files.setPosixFilePermissions(script, perms);
+        Files.setPosixFilePermissions(path, perms);
     }
 }

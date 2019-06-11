@@ -123,6 +123,12 @@ public class SVMBridge {
         // LIBS
         try {
             FileDeps.setupDependencies(omegaConfig);
+
+            String llcPath = Omega.getConfig().getLlcPath();
+            if (llcPath == null || llcPath.isEmpty()) {
+                Path llvmLib = Path.of(Omega.getConfig().getGraalLibsRoot()).getParent().resolve("llvm");
+                FileOps.setExecutionPermissions(llvmLib.resolve("llc"));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
