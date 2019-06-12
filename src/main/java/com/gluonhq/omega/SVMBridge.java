@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class SVMBridge {
@@ -116,7 +117,12 @@ public class SVMBridge {
         SVMBridge.JAVASDK = javalibs.toString();
         SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
         SVMBridge.USE_JAVAFX = omegaConfig.isUseJavaFX();
-        SVMBridge.USE_LLVM = "llvm".equals(omegaConfig.getBackend());
+        String backend = omegaConfig.getBackend();
+        if (backend != null && ! backend.isEmpty()) {
+            SVMBridge.USE_LLVM = "llvm".equals(backend.toLowerCase(Locale.ROOT));
+        } else {
+            SVMBridge.USE_LLVM = "ios".equals(omegaConfig.getTarget());
+        }
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
         SVMBridge.CUSTOM_JNI_LIST.addAll(omegaConfig.getJniList());
         SVMBridge.CUSTOM_DELAY_INIT_LIST.addAll(omegaConfig.getDelayInitList());
@@ -556,25 +562,26 @@ public class SVMBridge {
 
     private static List<String> getNativeReleaseSymbolsList(Path libs) throws IOException {
         List<String> symbols = new ArrayList<>();
-        Files.list(libs)
-                .filter(p -> p.toString().endsWith(".a"))
-                .forEach(lib -> {
-                    ProcessBuilder pb = new ProcessBuilder("nm", "-Uj", lib.toString());
-                    try {
-                        Process p = pb.start();
-                        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                            String method;
-                            while ((method = br.readLine()) != null) {
-                                if (method.startsWith("_Java") || method.startsWith("_JNI_OnLoad")) {
-                                    symbols.add(method);
+        if (Files.exists(libs)) {
+            Files.list(libs)
+                    .filter(p -> p.toString().endsWith(".a"))
+                    .forEach(lib -> {
+                        ProcessBuilder pb = new ProcessBuilder("nm", "-Uj", lib.toString());
+                        try {
+                            Process p = pb.start();
+                            try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                                String method;
+                                while ((method = br.readLine()) != null) {
+                                    if (method.startsWith("_Java") || method.startsWith("_JNI_OnLoad")) {
+                                        symbols.add(method);
+                                    }
                                 }
                             }
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
+                    });
+        }
         return symbols;
     }
 }
