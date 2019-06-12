@@ -122,6 +122,7 @@ public class SVMBridge {
             SVMBridge.USE_LLVM = "llvm".equals(backend.toLowerCase(Locale.ROOT));
         } else {
             SVMBridge.USE_LLVM = "ios".equals(omegaConfig.getTarget());
+            omegaConfig.setBackend(SVMBridge.USE_LLVM? "llvm": "lir");
         }
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfig.getReflectionList());
         SVMBridge.CUSTOM_JNI_LIST.addAll(omegaConfig.getJniList());
