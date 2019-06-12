@@ -3,7 +3,7 @@ apply plugin: 'application'
 apply plugin: 'maven-publish'
 
 group = "com.gluonhq"
-version = "0.0.9"
+version = "0.0.10-SNAPSHOT"
 
 mainClassName = 'com.gluonhq.omega.Omega'
 
