@@ -553,6 +553,33 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                 "-Dprism.debugfonts=true");
     }
 
+    private String getBundleId() throws IOException {
+        Path plist = rootPath.resolve("Default-Info.plist");
+        if (! plist.toFile().exists()) {
+            String className = Omega.getConfig().getMainClassName();
+            if (className.contains("/")) {
+                className = className.substring(className.indexOf("/") + 1);
+            }
+            return className;
+        } else {
+            try {
+                NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
+                return dict.getEntrySet().stream()
+                        .filter(e -> e.getKey().equals("CFBundleIdentifier"))
+                        .findFirst()
+                        .map(e -> {
+                            Logger.logInfo("BUNDLE ID = " + e.getValue().toString());
+                            return e.getValue().toString();
+                        })
+                        .orElse("");
+            } catch (Exception ex) {
+                Logger.logSevere(ex, "Could not process CFBundleIdentifier");
+            }
+        }
+        Logger.logSevere("Error: no bundleId was found");
+        return "";
+    }
+
     private void processInfoPlist(Path workDir) throws IOException {
         Path plist = rootPath.resolve("Default-Info.plist");
         boolean inited = true;
@@ -614,7 +641,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             orderedDict.saveAsXML(tmpPath.resolve("Info.plist"));
             orderedDict.getEntrySet().forEach(e -> {
                         if (e.getKey().equals("CFBundleIdentifier")) {
-                            System.out.println("BUNDLE ID = "+e.getValue().toString());
+                            Logger.logInfo("BUNDLE ID = "+e.getValue().toString());
                             bundleId = e.getValue().toString();
                         }
                         Logger.logDebug("Info.plist Entry: " + e);
@@ -662,7 +689,11 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     private void signApp() throws IOException {
-        Path provisioningProfilePath = getProvisioningProfile().getPath();
+        ProvisioningProfile provisioningProfile = getProvisioningProfile();
+        if (provisioningProfile == null) {
+            throw new RuntimeException("Provisioning profile not found");
+        }
+        Path provisioningProfilePath = provisioningProfile.getPath();
         Path dest = appPath.resolve("embedded.mobileprovision");
         Files.copy(provisioningProfilePath, dest, REPLACE_EXISTING);
         codesignApp(getOrCreateEntitlementsPList(true, appId), appPath);
@@ -785,11 +816,15 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         return destFile;
     }
 
-    private ProvisioningProfile getProvisioningProfile() {
+    private ProvisioningProfile getProvisioningProfile() throws IOException {
+        if (bundleId == null) {
+            bundleId = getBundleId();
+        }
+
         if (provisioningProfile == null) {
             List<SigningIdentity> candidates = getSigningIdentity();
             for (SigningIdentity candidate : candidates) {
-                provisioningProfile = ProvisioningProfile.find(candidate, appId);
+                provisioningProfile = ProvisioningProfile.find(candidate, bundleId);
                 if (provisioningProfile != null) {
                     if (providedProvisioningProfile == null
                             || providedProvisioningProfile.equals(provisioningProfile.getName())) {
@@ -799,7 +834,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
                     }
                 }
             }
-            Logger.logDebug("Warning, getProvisioningProfile is failing");
+            Logger.logInfo("Warning, getProvisioningProfile is failing");
         }
         return provisioningProfile;
     }

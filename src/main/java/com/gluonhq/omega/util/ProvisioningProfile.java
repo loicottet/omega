@@ -197,7 +197,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
                         Logger.logDebug("YES, we have a MATCH!! " + p + " matches " + signingIdentity);
                         answer = p;
                     } else {
-                        //      System.err.println("APPIDS match, but fps not, fp = "+fp+" and sfp = "+signingIdentity.fingerprint);
+                        Logger.logDebug("APPIDS match, but fps not, fp = "+fp+" and sfp = "+signingIdentity.fingerprint);
                     }
                 }
             }
