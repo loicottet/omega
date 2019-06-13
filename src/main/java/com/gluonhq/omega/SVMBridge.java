@@ -205,9 +205,10 @@ public class SVMBridge {
         linkedList.add("-Dgraalvm.version=" + Omega.getConfig().getGraalLibsVersion());
         // If we use JNI, always set the platform to InternalPlatform
         if (Omega.getConfig().isUseJNI()) {
-            if (configuration.isCrossCompile()) {
+            if (configuration.isCrossCompile()) { // this is only the case for iOS/AArch64 for now
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
                 linkedList.add("-Dsvm.targetArch=arm");
+                linkedList.add("-Dsvm.targetName=iOS");
             } else if (Omega.macHost) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
             } else if (Omega.linux) {
@@ -227,8 +228,6 @@ public class SVMBridge {
             }
             linkedList.add("-Dsvm.llvm.root=" + llcPath);
         }
-        linkedList.add("-Xdebug");
-        linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
         linkedList.add("-Dorg.graalvm.version=" + Omega.getConfig().getGraalLibsVersion());
         linkedList.add("-Dcom.oracle.graalvm.isaot=true");
         linkedList.add("--add-exports");
