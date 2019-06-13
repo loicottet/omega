@@ -228,8 +228,6 @@ public class SVMBridge {
             }
             linkedList.add("-Dsvm.llvm.root=" + llcPath);
         }
-        linkedList.add("-Xdebug");
-        linkedList.add("-Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n");
         linkedList.add("-Dorg.graalvm.version=" + Omega.getConfig().getGraalLibsVersion());
         linkedList.add("-Dcom.oracle.graalvm.isaot=true");
         linkedList.add("--add-exports");
