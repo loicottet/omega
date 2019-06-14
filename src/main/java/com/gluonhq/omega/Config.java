@@ -209,6 +209,10 @@ public class Config {
         this.backend = backend;
     }
 
+    public boolean isUseLLVM() {
+        return "llvm".equals(backend);
+    }
+
     public List<String> getBundlesList() {
         return bundlesList;
     }
