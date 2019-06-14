@@ -25,29 +25,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.gluonhq.omega.util;
+package com.gluonhq.omega.target;
 
-import com.gluonhq.omega.Omega;
+import java.nio.file.Path;
+import java.util.List;
 
-public class Logger {
+public interface TargetProcess {
 
-    public static void logInfo(String s) {
-        System.err.println(s);
-    }
+    void compile(List<Path> classPath, String mainClassName, String appName) throws Exception;
 
-    public static void logDebug(String s) {
-        if (Omega.getConfiguration().isVerbose()) {
-            System.err.println(s);
-        }
-    }
+    void link(String appName) throws Exception;
 
-    public static void logSevere(String s) {
-        System.err.println(s);
-    }
+    void run(String appName) throws Exception;
 
-    public static void logSevere(Throwable ex, String s) {
-        logSevere(s);
-        ex.printStackTrace();
-        throw new RuntimeException ("Severe Error " + ex);
-    }
+    List<String> getReleaseSymbolsList();
+
 }

@@ -33,16 +33,32 @@ public class Constants {
      * Supported hosts
      *
      */
-    public static final String HOST_MAC = "mac";
+    public static final String HOST_MAC = "macos";
     public static final String HOST_LINUX = "linux";
 
     /**
      * Supported targets
      *
      */
-    public static final String TARGET_HOST = "host";
+    public static final String TARGET_HOST = "host"; // either mac or linux, based on host
+    public static final String TARGET_MAC = "macos";
+    public static final String TARGET_LINUX = "linux";
     public static final String TARGET_IOS = "ios";
     public static final String TARGET_IOS_SIM = "ios-sim";
+
+    /**
+     * Supported target app folders
+     *
+     */
+    public static final String APP_MAC = "mac";
+    public static final String APP_IOS = "ios";
+
+    /**
+     * Supported target source folders
+     *
+     */
+    public static final String SOURCE_MAC = "mac";
+    public static final String SOURCE_IOS = "ios";
 
     /**
      * String used to download dependencies for supported hosts
@@ -60,4 +76,24 @@ public class Constants {
     public static final String DEPS_TARGET_IOS = "ios";
 
 
+    /**
+     * Paths
+     */
+    public static final String CLIENT_PATH = "client";
+    public static final String GVM_PATH = "gvm";
+    public static final String SOURCE_PATH = "src";
+    public static final String TMP_PATH = "tmp";
+    public static final String LIB_PATH = "lib";
+
+    /**
+     * Archs
+     */
+    public static final String ARM64_ARCH = "arm64";
+    public static final String AMD64_ARCH = "x86_64";
+
+    /**
+     * Backend
+     */
+    public static final String BACKEND_LIR = "lir";
+    public static final String BACKEND_LLVM = "llvm";
 }

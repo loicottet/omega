@@ -27,6 +27,8 @@
  */
 package com.gluonhq.omega.target;
 
+import com.gluonhq.omega.Omega;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +36,7 @@ import java.util.List;
 
 import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
 
-public abstract class AbstractTargetConfiguration implements TargetConfiguration {
+public abstract class AbstractTargetProcess implements TargetProcess {
 
     Path gvmPath;
     List<Path> classPath;
@@ -258,7 +260,6 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
     ));
 
     private static final List<String> releaseSymbolsList = Arrays.asList(
-//            "_Java_java_io_UnixFileSystem_canonicalize0",
             "_Java_jdk_internal_misc_VM_getNanoTimeAdjustment");
 
     private static final List<String> releaseSymbolsFXList = Arrays.asList(
@@ -301,28 +302,28 @@ public abstract class AbstractTargetConfiguration implements TargetConfiguration
     }
 
     @Override
-    public void compile(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception {
-        this.gvmPath = gvmPath;
+    public void compile(List<Path> classPath, String mainClassName, String appName) throws Exception {
+        this.gvmPath = Omega.getPaths().getGvmPath();
         this.classPath = classPath;
         this.mainClassName = mainClassName;
         this.appName = appName;
-        this.target = target;
+        this.target = Omega.getConfiguration().getTarget().getOs();
         compileAdditionalSources();
         compileApplication();
     }
 
     @Override
-    public void link(Path workDir, String appName, String target) throws Exception {
-        this.workDir = workDir;
+    public void link(String appName) throws Exception {
+        this.workDir = Omega.getPaths().getTmpPath();
         this.appName = appName;
-        this.target = target;
+        this.target = Omega.getConfiguration().getTarget().getOs();
     }
 
     @Override
-    public void run(Path workDir, String appName, String target) throws Exception {
-        this.workDir = workDir;
+    public void run(String appName) throws Exception {
+        this.workDir = Omega.getPaths().getClientPath();
         this.appName = appName;
-        this.target = target;
+        this.target = Omega.getConfiguration().getTarget().getOs();
     }
 
 }

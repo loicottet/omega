@@ -33,9 +33,10 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
 import com.dd.plist.PropertyListParser;
-import com.gluonhq.omega.Config;
+import com.gluonhq.omega.Configuration;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
+import com.gluonhq.omega.util.Constants;
 import com.gluonhq.omega.util.DeviceIO;
 import com.gluonhq.omega.util.DeviceLockedException;
 import com.gluonhq.omega.util.FileOps;
@@ -78,12 +79,9 @@ import java.util.zip.ZipFile;
 import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-public class IosTargetConfiguration extends DarwinTargetConfiguration {
+public class IosTargetProcess extends DarwinTargetProcess {
 
-    private static final String ARCH_X86_64 = "x86_64";
-    private static final String ARCH_ARM64 = "arm64";
-
-    private String arch = ARCH_X86_64;
+    private String arch = Constants.AMD64_ARCH;
     private XcodeUtil xcodeUtil;
     private static String appId;
 
@@ -174,11 +172,11 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             "Gluon-iphone-spotlight-settings-icon-29@3x.png"
             ));
 
-    private final Config omegaConfig;
+    private final Configuration omegaConfiguration;
 
-    public IosTargetConfiguration(Config config, Path iosDir) {
+    public IosTargetProcess(Configuration configuration, Path iosDir) {
         this.rootPath = iosDir;
-        this.omegaConfig = config;
+        this.omegaConfiguration = configuration;
         try {
             Files.createDirectories(iosDir);
         } catch (IOException e) {
@@ -203,9 +201,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     private List<String> getJavaFXSymbols() {
-        List<String> answer = new ArrayList();
+        List<String> answer = new ArrayList<>();
         try {
-            InputStream is = IosTargetConfiguration.class.getResourceAsStream("/symbols/ios-javafx.symbols");
+            InputStream is = IosTargetProcess.class.getResourceAsStream("/symbols/ios-javafx.symbols");
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String entry = br.readLine();
             while (entry != null) {
@@ -234,37 +232,31 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileApplication() throws Exception {
-        setupArch(target);
+        setupArch();
         Logger.logDebug("Compiling ios application");
         SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
     }
 
     @Override
     public boolean isCrossCompile() {
-        return ARCH_ARM64.equals(arch);
+        return Constants.ARM64_ARCH.equals(omegaConfiguration.getTarget().getArch());
     }
 
-    private void setupArch(String target) {
-        if (target.equals("ios")) {
-            arch = ARCH_ARM64;
-        } else if (target.equals("ios-sim")) {
-            arch = ARCH_X86_64;
-        } else {
-            throw new RuntimeException("iOS Arch for " + target + " not supported");
-        }
+    private void setupArch() {
+        arch = omegaConfiguration.getTarget().getArch();
     }
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        setupArch(target);
-        libPath = this.gvmPath.resolve("lib");
+        setupArch();
+        libPath = this.gvmPath.resolve(Constants.LIB_PATH);
         Files.createDirectories(libPath);
         Logger.logDebug("Extracting native libs to: " + libPath);
         classPath.stream()
             .filter(s -> s.toString().endsWith(".jar"))
             .forEach(this::copyNativeLibFiles);
 
-        this.workDir = this.gvmPath.getParent().resolve("ios").resolve(appName + ".app");
+        this.workDir = this.gvmPath.getParent().resolve(Constants.SOURCE_IOS).resolve(appName + ".app");
         Files.createDirectories(workDir);
         Logger.logDebug("Compiling additional sources to " + workDir);
         FileOps.copyResource("/native/ios/AppDelegate" + (isSimulator() ? "-sim" : "") + ".m", workDir.resolve("AppDelegate.m"));
@@ -300,9 +292,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
-    public void link(Path workDir, String appName, String target) throws Exception {
-        super.link(workDir, appName, target);
-        setupArch(target);
+    public void link(String appName) throws Exception {
+        super.link(appName);
+        setupArch();
         // SVMBridge init is called before we enter this function
         // should be refactored to never call this
         // SVMBridge.linkSetup();
@@ -310,7 +302,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
-        if ("llvm".equals(Omega.getConfig().getBackend())) {
+        if ("llvm".equals(Omega.getConfiguration().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
             Logger.logDebug("got llvm at: " + o2.toString());
         }
@@ -318,9 +310,9 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         Logger.logDebug("Linking at " + workDir.toString());
         Path gvmPath = workDir.getParent();
         Path omegaPath = gvmPath.getParent();
-        appPath = omegaPath.resolve("ios").resolve(appName + ".app");
+        appPath = omegaPath.resolve(Constants.APP_IOS).resolve(appName + ".app");
         Files.createDirectories(appPath);
-        libPath = omegaPath.resolve("gvm").resolve("lib");
+        libPath = omegaPath.resolve(Constants.GVM_PATH).resolve(Constants.LIB_PATH);
         Logger.logDebug("Lib Path at " + libPath.toString() + ", files: " + Files.list(libPath).count());
 
         ProcessBuilder linkBuilder = new ProcessBuilder("clang");
@@ -328,7 +320,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add("-o");
         linkBuilder.command().add(appPath.toString() + "/" + appName + "App");
         linkBuilder.command().add("-Wl,-no_implicit_dylibs");
-        if (!"llvm".equals(Omega.getConfig().getBackend())) {
+        if (!"llvm".equals(Omega.getConfiguration().getBackend())) {
             linkBuilder.command().add("-Wl,-dead_strip");
         }
         linkBuilder.command().add("-fPIC");
@@ -340,7 +332,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
 
         linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
 
-        if (!omegaConfig.isUseJNI()) {
+        if (!omegaConfiguration.isUseJNI()) {
              if (USE_JAVAFX) {
                  javafxLibs.forEach(name ->
                          linkBuilder.command().add("-Wl,-all_load," + SVMBridge.JFXSDK + "/lib/lib" + name + ".a"));
@@ -352,19 +344,19 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add(appPath.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
         // LLVM
-        if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
+        if (Constants.BACKEND_LLVM.equals(Omega.getConfiguration().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
         linkBuilder.command().add("-L" + SVMBridge.GRAALSDK + "/svm/clibraries/" + (isArchAmd64() ? "darwin-amd64" : "darwin-arm64"));
         linkBuilder.command().add("-L" + SVMBridge.JAVASDK);
-        if (omegaConfig.isUseJNI() && USE_JAVAFX) {
+        if (omegaConfiguration.isUseJNI() && USE_JAVAFX) {
             linkBuilder.command().add("-L" + SVMBridge.JFXSDK + "/lib");
         }
         if (Files.list(libPath).count() > 0) {
             linkBuilder.command().add("-L" + libPath.toString());
         }
         linkBuilder.command().addAll(javaCommonLibs);
-        if (omegaConfig.isUseJNI()) {
+        if (omegaConfiguration.isUseJNI()) {
             linkBuilder.command().addAll(javaJNILibs);
         }
         if (USE_JAVAFX) {
@@ -410,19 +402,19 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
-    public void run(Path workDir, String appName, String target) throws Exception {
-        super.run(workDir, appName, target);
-        setupArch(target);
+    public void run(String appName) throws Exception {
+        super.run(appName);
+        setupArch();
 
         Logger.logDebug("Running at " + workDir.toString());
-        appPath = workDir.resolve("ios").resolve(appName + ".app");
+        appPath = workDir.resolve(Constants.APP_IOS).resolve(appName + ".app");
         appId = appName;
 
         if (isSimulator()) {
             launchOnSimulator(appPath.toString());
         } else {
             try {
-                tmpPath = workDir.resolve("gvm").resolve("tmp");
+                tmpPath = workDir.resolve(Constants.GVM_PATH).resolve(Constants.TMP_PATH);
                 NSDictionaryEx dict = new NSDictionaryEx(tmpPath.resolve("Info.plist").toFile());
                 bundleId = dict.getEntrySet().stream()
                         .filter(e -> e.getKey().equals("CFBundleIdentifier"))
@@ -556,7 +548,7 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     private String getBundleId() throws IOException {
         Path plist = rootPath.resolve("Default-Info.plist");
         if (! plist.toFile().exists()) {
-            String className = Omega.getConfig().getMainClassName();
+            String className = Omega.getConfiguration().getMainClassName();
             if (className.contains("/")) {
                 className = className.substring(className.indexOf("/") + 1);
             }
@@ -599,13 +591,13 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
             NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
             if (!inited) {
                 // ModuleName not supported
-                String className = Omega.getConfig().getMainClassName();
+                String className = Omega.getConfiguration().getMainClassName();
                 if (className.contains("/")) {
                     className = className.substring(className.indexOf("/") + 1);
                 }
                 dict.put("CFBundleIdentifier", className);
-                dict.put("CFBundleExecutable", Omega.getConfig().getAppName() + "App");
-                dict.put("CFBundleName", Omega.getConfig().getAppName());
+                dict.put("CFBundleExecutable", Omega.getConfiguration().getAppName() + "App");
+                dict.put("CFBundleName", Omega.getConfiguration().getAppName());
                 dict.saveAsXML(plist);
             }
             dict.put("DTPlatformName", xcodeUtil.getPlatformName());
@@ -847,17 +839,16 @@ public class IosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     private boolean isSimulator() {
-        return ARCH_X86_64.equals(arch);
+        return Constants.AMD64_ARCH.equals(arch);
     }
 
     private boolean isArchArm64() {
-        return ARCH_ARM64.equals(arch);
+        return Constants.ARM64_ARCH.equals(arch);
     }
 
     private boolean isArchAmd64() {
-        return ARCH_X86_64.equals(arch);
+        return Constants.AMD64_ARCH.equals(arch);
     }
-
 
     private void generateDsym(final File dir, final String executable, boolean copyToIndexedDir) throws IOException {
         final File dsymDir = new File(dir.getParentFile(), dir.getName() + ".dSYM");

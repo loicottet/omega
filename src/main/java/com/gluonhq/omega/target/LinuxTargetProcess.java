@@ -40,7 +40,7 @@ import java.util.List;
 
 import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
 
-public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
+public class LinuxTargetProcess extends AbstractTargetProcess {
 
     private static final List<String>javafxJNILinuxClassList = Arrays.asList(
             "com.sun.glass.ui.gtk.GtkApplication",
@@ -126,15 +126,15 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     }
 
     @Override
-    public void link(Path workDir, String appName, String target) throws Exception {
-        super.link(workDir, appName, target);
+    public void link(String appName) throws Exception {
+        super.link(appName);
         Logger.logDebug("Linking into "+appName);
         SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
         Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
-        if ("llvm".equals(Omega.getConfig().getBackend())) {
+        if ("llvm".equals(Omega.getConfiguration().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
             Logger.logDebug("got llvm at: " + o2.toString());
         }
@@ -175,7 +175,7 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
         linkBuilder.command().add(linux.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
         // LLVM
-        if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
+        if ("llvm".equals(Omega.getConfiguration().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
 
@@ -201,8 +201,8 @@ public class LinuxTargetConfiguration extends AbstractTargetConfiguration {
     }
 
     @Override
-    public void run(Path workDir, String appName, String target) throws Exception {
-        super.run(workDir, appName, target);
+    public void run(String appName) throws Exception {
+        super.run(appName);
 
         Logger.logDebug("Running at " + workDir.toString());
         Path mac = workDir.resolve("linux").resolve(appName);
