@@ -162,33 +162,34 @@ public class FileDeps {
         }
 
         // JavaFX Static
-        Path javafxStatic = Path.of(config.getJavaFXRoot())
-                .resolve("lib");
-        LOGGER.info("Processing JavaFXStatic dependencies at " + javafxStatic.toString());
+        if (config.isUseJavaFX()) {
+            Path javafxStatic = Path.of(config.getJavaFXRoot()).resolve("lib");
+            LOGGER.info("Processing JavaFXStatic dependencies at " + javafxStatic.toString());
 
-        if (! Files.isDirectory(javafxStatic)) {
-            LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/" + target + "-sdk/lib folder not found");
-            downloadJavaFXStatic = true;
-        } else {
-            String path = javafxStatic.toString();
-            if (JAVAFX_FILES.stream()
-                    .map(s -> new File(path, s))
-                    .anyMatch(f -> !f.exists())) {
-                LOGGER.info("jar file not found");
+            if (! Files.isDirectory(javafxStatic)) {
+                LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/" + target + "-sdk/lib folder not found");
                 downloadJavaFXStatic = true;
-            } else if (config.isEnableCheckHash()) {
-                LOGGER.info("Checking javafx static sdk hashes");
-                Map<String, String> hashes = getHashMap(javafxStatic.getParent().getParent().toString() + File.separator + "javafxStaticSdk-" + target + ".md5");
-                if (hashes == null) {
-                    LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/javafxStaticSdk-" + target + ".md5 not found");
-                    downloadJavaFXStatic = true;
-                } else if (JAVAFX_FILES.stream()
+            } else {
+                String path = javafxStatic.toString();
+                if (JAVAFX_FILES.stream()
                         .map(s -> new File(path, s))
-                        .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
-                    LOGGER.info("jar file has invalid hashcode");
+                        .anyMatch(f -> !f.exists())) {
+                    LOGGER.info("jar file not found");
                     downloadJavaFXStatic = true;
+                } else if (config.isEnableCheckHash()) {
+                    LOGGER.info("Checking javafx static sdk hashes");
+                    Map<String, String> hashes = getHashMap(javafxStatic.getParent().getParent().toString() + File.separator + "javafxStaticSdk-" + target + ".md5");
+                    if (hashes == null) {
+                        LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/javafxStaticSdk-" + target + ".md5 not found");
+                        downloadJavaFXStatic = true;
+                    } else if (JAVAFX_FILES.stream()
+                            .map(s -> new File(path, s))
+                            .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
+                        LOGGER.info("jar file has invalid hashcode");
+                        downloadJavaFXStatic = true;
+                    }
                 }
-        }
+            }
         }
         try {
             if (downloadGraalLibs) {
