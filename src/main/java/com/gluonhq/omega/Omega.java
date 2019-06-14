@@ -48,17 +48,18 @@ public class Omega {
     private static Path omegaPath;
     private static Path gvmPath;
 
-    static boolean linux = false;
-    static boolean macHost = false;
+    static boolean isLinuxHost = false;
+    static boolean isMacHost = false;
+
     private static Config config;
 
     static {
         String osname = System.getProperty("os.name");
-        System.err.println("SVMBridge, osname = "+osname);
-        if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-            linux = true;
+        System.err.println("Omega :: host os.name = " + osname);
+        if (osname.toLowerCase(Locale.ROOT).contains("nux")) {
+            isLinuxHost = true;
         } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-            macHost = true;
+            isMacHost = true;
         }
     }
 
@@ -121,28 +122,6 @@ public class Omega {
 
         TargetConfiguration targetConfig = getTargetConfiguration(config, target);
         targetConfig.run(workDir, config.getAppName(), target);
-    }
-
-    /**
-     * Returns the target name based on the configuration.
-     * @param config the required configuration
-     * @return
-     */
-    public static String getTarget(Config config) {
-        String target = "";
-        if ("host".equals(config.getTarget())) {
-            String osname = System.getProperty("os.name");
-            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-                target = "linux";
-            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-                target = "macosx";
-            }
-        } else if ("ios".equals(Omega.config.getTarget()) || "ios-sim".equals(config.getTarget())) {
-            target = "ios";
-        } else {
-            throw new RuntimeException("No valid target: " + config.getTarget());
-        }
-        return target;
     }
 
     /**
@@ -260,12 +239,12 @@ public class Omega {
         TargetConfiguration targetConfiguration;
         if (target.startsWith("ios")) {
             targetConfiguration = new IosTargetConfiguration(config, omegaPath.getParent().getParent().resolve("src").resolve("ios"));
-        } else if (macHost) {
+        } else if (isMacHost) {
             targetConfiguration = new MacosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("mac"));
-        } else if (linux) {
+        } else if (isLinuxHost) {
             targetConfiguration = new LinuxTargetConfiguration();
         } else {
-            throw new RuntimeException("target not found: "+target);
+            throw new RuntimeException("target not supported: " + target);
         }
         return targetConfiguration;
     }

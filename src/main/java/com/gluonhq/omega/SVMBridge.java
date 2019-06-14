@@ -31,6 +31,7 @@ import com.gluonhq.omega.target.AbstractTargetConfiguration;
 import com.gluonhq.omega.target.LinuxTargetConfiguration;
 import com.gluonhq.omega.target.MacosTargetConfiguration;
 import com.gluonhq.omega.target.TargetConfiguration;
+import com.gluonhq.omega.util.Constants;
 import com.gluonhq.omega.util.FileDeps;
 import com.gluonhq.omega.util.FileOps;
 import com.gluonhq.omega.util.Logger;
@@ -92,7 +93,7 @@ public class SVMBridge {
 
     static void init() {
         Config omegaConfig = Omega.getConfig();
-        String target = Omega.getTarget(omegaConfig);
+        String depsTarget = FileDeps.getDepsTarget(omegaConfig);
         Path graallibs;
         String graalLibsUserPath = omegaConfig.getGraalLibsUserPath();
         if (graalLibsUserPath == null || graalLibsUserPath.isEmpty()) {
@@ -108,11 +109,11 @@ public class SVMBridge {
         Path javalibs = USER_OMEGA_PATH
                 .resolve("javaStaticSdk")
                 .resolve(omegaConfig.getJavaStaticSdkVersion())
-                .resolve(target + "-libs-" + omegaConfig.getJavaStaticSdkVersion());
+                .resolve(depsTarget + "-libs-" + omegaConfig.getJavaStaticSdkVersion());
         omegaConfig.setStaticRoot(javalibs.toString());
         omegaConfig.setJavaFXRoot(USER_OMEGA_PATH.resolve("javafxStaticSdk")
                 .resolve(omegaConfig.getJavafxStaticSdkVersion())
-                .resolve(target + "-sdk").toString());
+                .resolve(depsTarget + "-sdk").toString());
         SVMBridge.GRAALSDK = graallibs.toString();
         SVMBridge.JAVASDK = javalibs.toString();
         SVMBridge.JFXSDK = omegaConfig.getJavaFXRoot();
@@ -210,9 +211,12 @@ public class SVMBridge {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
                 linkedList.add("-Dsvm.targetArch=arm");
                 linkedList.add("-Dsvm.targetName=iOS");
-            } else if (Omega.macHost) {
+            } else if (Omega.isMacHost) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
-            } else if (Omega.linux) {
+                if (Constants.TARGET_IOS_SIM.equals(Omega.getConfig().getTarget())) {
+                    linkedList.add("-Dsvm.targetName=iOS");
+                }
+            } else if (Omega.isLinuxHost) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
             }
         } else {
@@ -387,7 +391,7 @@ public class SVMBridge {
             e.printStackTrace();
         }
         // TODO: Include arm64 in cLibraries
-        String hostedNative = Omega.macHost ?
+        String hostedNative = Omega.isMacHost ?
 //                (config.isCrossCompile() ? "darwin-arm64" : "darwin-amd64")  :
                 "darwin-amd64" :
                 "linux-amd64";
@@ -402,7 +406,7 @@ public class SVMBridge {
                 ));
         runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
 
-        if (config.isCrossCompile() || Omega.macHost) {
+        if (config.isCrossCompile() || Omega.isMacHost) {
             runtimeArgs.add("-H:+SharedLibrary");
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
