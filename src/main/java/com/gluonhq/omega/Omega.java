@@ -33,32 +33,16 @@ import com.gluonhq.omega.target.TargetProcess;
 import com.gluonhq.omega.target.TargetProcessFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Omega {
 
-    static boolean isLinuxHost = false;
-    static boolean isMacHost = false;
-
     private static Configuration configuration;
     private static ProcessPaths paths;
-
-    static {
-        String osname = System.getProperty("os.name");
-        System.err.println("Omega :: host os.name = " + osname);
-        if (osname.toLowerCase(Locale.ROOT).contains("nux")) {
-            isLinuxHost = true;
-        } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-            isMacHost = true;
-        }
-    }
 
     public static Configuration getConfiguration() {
         return configuration;
@@ -98,7 +82,6 @@ public class Omega {
         configure(configuration);
         paths = new ProcessPaths(buildRoot);
         TargetProcess targetProcess = TargetProcessFactory.getTargetProcess(configuration, paths.getSourcePath());
-        SVMBridge.init();
         SVMBridge.createReleaseSymbols(paths.getGvmPath(), targetProcess);
         targetProcess.link(configuration.getAppName());
     }
@@ -188,8 +171,6 @@ public class Omega {
             configuration.setAppName(appName);
             configuration.setMainClassName(mainClassName);
 
-            SVMBridge.init();
-
             Omega.nativeCompile(buildRoot, configuration, cp);
 
             Omega.nativeLink(buildRoot, configuration);
@@ -211,6 +192,8 @@ public class Omega {
             throw new RuntimeException("Error: AppName is not set");
         }
         Omega.configuration = configuration;
+        System.err.println("Omega :: host triplet = " + configuration.getHost());
+        System.err.println("Omega :: target triplet = " + configuration.getTarget());
     }
 
 }

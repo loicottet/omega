@@ -91,7 +91,7 @@ public class SVMBridge {
 
     private static AbstractTargetProcess targetProcess;
 
-    static void init() {
+    private static void init() {
         Configuration omegaConfiguration = Omega.getConfiguration();
         String depsTarget = FileDeps.getDepsTarget(omegaConfiguration);
         Path graallibs;
@@ -126,9 +126,13 @@ public class SVMBridge {
                                     Constants.ARM64_ARCH.equals(omegaConfiguration.getTarget().getArch());
             omegaConfiguration.setBackend(SVMBridge.USE_LLVM ? Constants.BACKEND_LLVM : Constants.BACKEND_LIR);
         }
+        SVMBridge.CUSTOM_REFLECTION_LIST.clear();
         SVMBridge.CUSTOM_REFLECTION_LIST.addAll(omegaConfiguration.getReflectionList());
+        SVMBridge.CUSTOM_JNI_LIST.clear();
         SVMBridge.CUSTOM_JNI_LIST.addAll(omegaConfiguration.getJniList());
+        SVMBridge.CUSTOM_DELAY_INIT_LIST.clear();
         SVMBridge.CUSTOM_DELAY_INIT_LIST.addAll(omegaConfiguration.getDelayInitList());
+        SVMBridge.CUSTOM_RELEASE_SYMBOL_LIST.clear();
         SVMBridge.CUSTOM_RELEASE_SYMBOL_LIST.addAll(omegaConfiguration.getReleaseSymbolsList());
 
         // LIBS
@@ -148,7 +152,7 @@ public class SVMBridge {
 
     public static void compile(Path workingDir, List<Path> gClassdir, String className, String appName,
                                AbstractTargetProcess targetProcess) throws Exception {
-        init();
+        linkSetup();
         SVMBridge.targetProcess = targetProcess;
         deleteDirectory(workingDir.resolve(Constants.TMP_PATH).toFile());
 
@@ -178,14 +182,11 @@ public class SVMBridge {
         setUpgradeModulePath();
         setRuntimeArgs(suffix);
 
-        String cp = classPath.stream()
-                .collect(Collectors.joining(File.pathSeparator));
+        String cp = String.join(File.pathSeparator, classPath);
 
-        String mp = modulePath.stream()
-                .collect(Collectors.joining(File.pathSeparator));
+        String mp = String.join(File.pathSeparator, modulePath);
 
-        String ump = upgradeModulePath.stream()
-                .collect(Collectors.joining(File.pathSeparator));
+        String ump = String.join(File.pathSeparator, upgradeModulePath);
 
         LinkedList<String> linkedList = new LinkedList<>();
         linkedList.add("-XX:+UnlockExperimentalVMOptions");
@@ -209,9 +210,9 @@ public class SVMBridge {
             if (targetProcess.isCrossCompile()) { // this is only the case for iOS/AArch64 for now
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
                 linkedList.add("-Dsvm.targetArch=arm");
-            } else if (Omega.isMacHost) {
+            } else if (Constants.HOST_MAC.equals(Omega.getConfiguration().getHost().getOs())) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
-            } else if (Omega.isLinuxHost) {
+            } else if (Constants.HOST_LINUX.equals(Omega.getConfiguration().getHost().getOs())) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$LINUX_JNI_AMD64");
             }
         } else {
@@ -386,7 +387,7 @@ public class SVMBridge {
             e.printStackTrace();
         }
         // TODO: Include arm64 in cLibraries
-        String hostedNative = Omega.isMacHost ?
+        String hostedNative = Constants.HOST_MAC.equals(Omega.getConfiguration().getHost().getOs()) ?
 //                (targetProcess.isCrossCompile() ? "darwin-arm64" : "darwin-amd64")  :
                 "darwin-amd64" :
                 "linux-amd64";
@@ -401,7 +402,7 @@ public class SVMBridge {
                 ));
         runtimeArgs.add("-H:JNIConfigurationFiles=" + workDir + "/jniconfig-" + suffix + ".json");
 
-        if (targetProcess.isCrossCompile() || Omega.isMacHost) {
+        if (targetProcess.isCrossCompile() || Constants.HOST_MAC.equals(Omega.getConfiguration().getHost().getOs())) {
             runtimeArgs.add("-H:+SharedLibrary");
         }
         runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
@@ -491,6 +492,7 @@ public class SVMBridge {
     }
 
     static void createReleaseSymbols(Path wd, TargetProcess config) throws Exception {
+        linkSetup();
         Configuration omegaConfiguration = Omega.getConfiguration();
         Path releaseSymbols = wd.resolve("release.symbols");
         File f = releaseSymbols.toFile();
