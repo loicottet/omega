@@ -57,7 +57,10 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
     private static final List<String> javafxReflectionLinuxClassList = Arrays.asList(
             "com.sun.glass.ui.gtk.GtkPlatformFactory",
             "com.sun.prism.es2.ES2Pipeline",
+            "com.sun.prism.es2.ES2ResourceFactory",
+            "com.sun.prism.es2.ES2Shader",
             "com.sun.prism.es2.X11GLFactory",
+            "com.sun.scenario.effect.impl.es2.ES2ShaderSource",
             "com.sun.javafx.font.freetype.FTFactory");
 
     private static final List<String> rerunLinuxClinitList = Arrays.asList(
