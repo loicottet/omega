@@ -27,9 +27,11 @@
  */
 package com.gluonhq.omega;
 
+import com.gluonhq.omega.model.TargetTriplet;
+
 import java.util.List;
 
-public class Config {
+public class Configuration {
 
     private String graalLibsVersion;
     private String javaStaticSdkVersion;
@@ -44,7 +46,8 @@ public class Config {
     private boolean enableCheckHash = true;
     private boolean verbose = false;
 
-    private String target;
+    private TargetTriplet target;
+    private TargetTriplet host;
     private String backend;
     private List<String> bundlesList;
     private List<String> resourcesList;
@@ -57,7 +60,7 @@ public class Config {
     private String appName;
     private String mainClassName;
 
-    public Config() {}
+    public Configuration() {}
 
     public String getGraalLibsVersion() {
         return graalLibsVersion;
@@ -193,12 +196,24 @@ public class Config {
         this.enableCheckHash = enableCheckHash;
     }
 
-    public String getTarget() {
+    public TargetTriplet getTarget() {
         return target;
     }
 
-    public void setTarget(String target) {
+    /**
+     * Sets the target triplet
+     * @param target
+     */
+    public void setTarget(TargetTriplet target) {
         this.target = target;
+    }
+
+    public TargetTriplet getHost() {
+        return host;
+    }
+
+    public void setHost(TargetTriplet host) {
+        this.host = host;
     }
 
     public String getBackend() {

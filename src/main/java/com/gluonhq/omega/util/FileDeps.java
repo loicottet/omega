@@ -27,8 +27,7 @@
  */
 package com.gluonhq.omega.util;
 
-import com.gluonhq.omega.Config;
-import com.gluonhq.omega.Omega;
+import com.gluonhq.omega.Configuration;
 import com.gluonhq.omega.SVMBridge;
 
 import java.io.File;
@@ -49,13 +48,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class FileDeps {
-
-    private static final Logger LOGGER = Logger.getLogger(FileDeps.class.getName());
 
     private static final String URL_GRAAL_LIBS = "http://download2.gluonhq.com/omega/graallibs/graalvm-svm-${host}-${version}.zip";
     private static final String URL_JAVA_STATIC_SDK = "http://download2.gluonhq.com/omega/javastaticsdk/${target}-libs-${version}.zip";
@@ -80,8 +76,8 @@ public class FileDeps {
             "libglass.a"
     );
 
-    public static void setupDependencies(Config config) throws IOException {
-        String target = Omega.getTarget(config);
+    public static void setupDependencies(Configuration configuration) throws IOException {
+        String target = getDepsTarget(configuration);
 
         if (! Files.isDirectory(SVMBridge.USER_OMEGA_PATH)) {
             Files.createDirectories(SVMBridge.USER_OMEGA_PATH);
@@ -90,39 +86,39 @@ public class FileDeps {
         boolean downloadGraalLibs = false, downloadJavaStatic = false, downloadJavaFXStatic = false;
 
         // GraalLibs
-        String graalLibsUserPath = config.getGraalLibsUserPath();
+        String graalLibsUserPath = configuration.getGraalLibsUserPath();
         if (graalLibsUserPath != null && ! graalLibsUserPath.isEmpty() &&
                 Files.isDirectory(Path.of(graalLibsUserPath))) {
-            LOGGER.info("Using GraalLibs from user path");
+            Logger.logDebug("Using GraalLibs from user path");
         } else {
-            Path graalLibs = Path.of(config.getGraalLibsRoot());
-            LOGGER.info("Processing graalLibs dependencies at " + graalLibs.toString());
+            Path graalLibs = Path.of(configuration.getGraalLibsRoot());
+            Logger.logDebug("Processing graalLibs dependencies at " + graalLibs.toString());
 
             if (!Files.isDirectory(graalLibs)) {
-                LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/lib folder not found");
+                Logger.logDebug("graalLibs/" + configuration.getGraalLibsVersion() + "/lib folder not found");
                 downloadGraalLibs = true;
             } else {
                 String path = graalLibs.toString();
                 if (GRAAL_FILES.stream()
                         .map(s -> new File(path, s))
                         .anyMatch(f -> !f.exists())) {
-                    LOGGER.info("jar file not found");
+                    Logger.logDebug("jar file not found");
                     downloadGraalLibs = true;
                 } else if (!graalLibs
                         .resolve("svm")
                         .resolve("clibraries").toFile().isDirectory()) {
-                    LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/lib/svm/clibraries not found");
+                    Logger.logDebug("graalLibs/" + configuration.getGraalLibsVersion() + "/lib/svm/clibraries not found");
                     downloadGraalLibs = true;
-                } else if (config.isEnableCheckHash()) {
-                    LOGGER.info("Checking graalLibs hashes");
+                } else if (configuration.isEnableCheckHash()) {
+                    Logger.logDebug("Checking graalLibs hashes");
                     Map<String, String> hashes = getHashMap(graalLibs.getParent().getParent().toString() + File.separator + "graalLibs.md5");
                     if (hashes == null) {
-                        LOGGER.info("graalLibs/" + config.getGraalLibsVersion() + "/graalLibs.md5 not found");
+                        Logger.logDebug("graalLibs/" + configuration.getGraalLibsVersion() + "/graalLibs.md5 not found");
                         downloadGraalLibs = true;
                     } else if (GRAAL_FILES.stream()
                             .map(s -> new File(path, s))
                             .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
-                        LOGGER.info("jar file has invalid hashcode");
+                        Logger.logDebug("jar file has invalid hashcode");
                         downloadGraalLibs = true;
                     }
                 }
@@ -131,30 +127,30 @@ public class FileDeps {
 
         // Java Static
 
-        Path javaStatic = Path.of(config.getStaticRoot());
-        LOGGER.info("Processing JavaStatic dependencies at " + javaStatic.toString());
+        Path javaStatic = Path.of(configuration.getStaticRoot());
+        Logger.logDebug("Processing JavaStatic dependencies at " + javaStatic.toString());
 
-        if (config.isUseJNI()) {
+        if (configuration.isUseJNI()) {
             if (! Files.isDirectory(javaStatic)) {
-                LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
+                Logger.logDebug("javaStaticSdk/" + configuration.getJavaStaticSdkVersion() + "/" + target + "-libs folder not found");
                 downloadJavaStatic = true;
             } else {
                 String path = javaStatic.toString();
                 if (JAVA_FILES.stream()
                         .map(s -> new File(path, s))
                         .anyMatch(f -> !f.exists())) {
-                    LOGGER.info("jar file not found");
+                    Logger.logDebug("jar file not found");
                     downloadJavaStatic = true;
-                } else if (config.isEnableCheckHash()) {
-                    LOGGER.info("Checking java static sdk hashes");
+                } else if (configuration.isEnableCheckHash()) {
+                    Logger.logDebug("Checking java static sdk hashes");
                     Map<String, String> hashes = getHashMap(javaStatic.getParent().toString() + File.separator + "javaStaticSdk-" + target + ".md5");
                     if (hashes == null) {
-                        LOGGER.info("javaStaticSdk/" + config.getJavaStaticSdkVersion() + "/javaStaticSdk-" + target + ".md5 not found");
+                        Logger.logDebug("javaStaticSdk/" + configuration.getJavaStaticSdkVersion() + "/javaStaticSdk-" + target + ".md5 not found");
                         downloadJavaStatic = true;
                     } else if (JAVA_FILES.stream()
                             .map(s -> new File(path, s))
                             .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
-                        LOGGER.info("jar file has invalid hashcode");
+                        Logger.logDebug("jar file has invalid hashcode");
                         downloadJavaStatic = true;
                     }
                 }
@@ -162,30 +158,30 @@ public class FileDeps {
         }
 
         // JavaFX Static
-        if (config.isUseJavaFX()) {
-            Path javafxStatic = Path.of(config.getJavaFXRoot()).resolve("lib");
-            LOGGER.info("Processing JavaFXStatic dependencies at " + javafxStatic.toString());
+        if (configuration.isUseJavaFX()) {
+            Path javafxStatic = Path.of(configuration.getJavaFXRoot()).resolve("lib");
+            Logger.logDebug("Processing JavaFXStatic dependencies at " + javafxStatic.toString());
 
             if (! Files.isDirectory(javafxStatic)) {
-                LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/" + target + "-sdk/lib folder not found");
+                Logger.logDebug("javafxStaticSdk/" + configuration.getJavafxStaticSdkVersion() + "/" + target + "-sdk/lib folder not found");
                 downloadJavaFXStatic = true;
             } else {
                 String path = javafxStatic.toString();
                 if (JAVAFX_FILES.stream()
                         .map(s -> new File(path, s))
                         .anyMatch(f -> !f.exists())) {
-                    LOGGER.info("jar file not found");
+                    Logger.logDebug("jar file not found");
                     downloadJavaFXStatic = true;
-                } else if (config.isEnableCheckHash()) {
-                    LOGGER.info("Checking javafx static sdk hashes");
+                } else if (configuration.isEnableCheckHash()) {
+                    Logger.logDebug("Checking javafx static sdk hashes");
                     Map<String, String> hashes = getHashMap(javafxStatic.getParent().getParent().toString() + File.separator + "javafxStaticSdk-" + target + ".md5");
                     if (hashes == null) {
-                        LOGGER.info("javafxStaticSdk/" + config.getJavafxStaticSdkVersion() + "/javafxStaticSdk-" + target + ".md5 not found");
+                        Logger.logDebug("javafxStaticSdk/" + configuration.getJavafxStaticSdkVersion() + "/javafxStaticSdk-" + target + ".md5 not found");
                         downloadJavaFXStatic = true;
                     } else if (JAVAFX_FILES.stream()
                             .map(s -> new File(path, s))
                             .anyMatch(f -> !hashes.get(f.getName()).equals(calculateCheckSum(f)))) {
-                        LOGGER.info("jar file has invalid hashcode");
+                        Logger.logDebug("jar file has invalid hashcode");
                         downloadJavaFXStatic = true;
                     }
                 }
@@ -193,21 +189,45 @@ public class FileDeps {
         }
         try {
             if (downloadGraalLibs) {
-                downloadGraalZip(SVMBridge.USER_OMEGA_PATH, config);
+                downloadGraalZip(SVMBridge.USER_OMEGA_PATH, configuration);
             }
 
             if (downloadJavaStatic) {
-                downloadJavaZip(target, SVMBridge.USER_OMEGA_PATH, config);
+                downloadJavaZip(target, SVMBridge.USER_OMEGA_PATH, configuration);
             }
 
             if (downloadJavaFXStatic) {
-                downloadJavaFXZip(target, SVMBridge.USER_OMEGA_PATH, config);
+                downloadJavaFXZip(target, SVMBridge.USER_OMEGA_PATH, configuration);
             }
 
         } catch (IOException e) {
             throw new RuntimeException("Error downloading zips: " + e.getMessage());
         }
-        LOGGER.info("Setup dependencies done");
+        Logger.logDebug("Setup dependencies done");
+    }
+
+    /**
+     * Returns the dependencies target name based on the configuration.
+     * @param configuration the required configuration
+     * @return a string used to download a zip for the given target
+     */
+    public static String getDepsTarget(Configuration configuration) {
+        String depsTarget = "";
+        String target = configuration.getTarget().getOs();
+        switch (target) {
+            case Constants.TARGET_MAC:
+                depsTarget = Constants.DEPS_TARGET_MAC;
+                break;
+            case Constants.TARGET_LINUX:
+                depsTarget = Constants.DEPS_TARGET_LINUX;
+                break;
+            case Constants.TARGET_IOS:
+                depsTarget = Constants.DEPS_TARGET_IOS;
+                break;
+            default:
+                throw new RuntimeException("Error: Target not supported for " + configuration.getTarget());
+        }
+        return depsTarget;
     }
 
     private static Map<String, String> getHashMap(String nameFile) {
@@ -219,39 +239,49 @@ public class FileDeps {
         return hashes;
     }
 
-    private static void downloadGraalZip(Path omegaPath, Config config) throws IOException {
-        LOGGER.info("Process zip graalLibs");
+    private static void downloadGraalZip(Path omegaPath, Configuration configuration) throws IOException {
+        Logger.logDebug("Process zip graalLibs");
         String osname = System.getProperty("os.name");
         String host;
         if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-            host = "linux";
+            host = Constants.DEPS_HOST_LINUX;
         } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-            host = "darwin";
+            host = Constants.DEPS_HOST_MAC;
         } else {
             throw new RuntimeException("Host " + osname + " not supported");
         }
         processZip(URL_GRAAL_LIBS
                         .replace("${host}", host)
-                        .replace("${version}", config.getGraalLibsVersion()),
-                omegaPath.resolve("graallibs-${version}.zip".replace("${version}", config.getGraalLibsVersion())),
-                "graalLibs", config.getGraalLibsVersion(), "graalLibs.md5");
-        LOGGER.info("Processing zip graalLibs done");
+                        .replace("${version}", configuration.getGraalLibsVersion()),
+                omegaPath.resolve("graallibs-${version}.zip"
+                        .replace("${version}", configuration.getGraalLibsVersion())),
+                "graalLibs", configuration.getGraalLibsVersion(), "graalLibs.md5");
+        Logger.logDebug("Processing zip graalLibs done");
     }
 
-    private static void downloadJavaZip(String target, Path omegaPath, Config config) throws IOException {
-        LOGGER.info("Process zip javaStaticSdk");
-        processZip(URL_JAVA_STATIC_SDK.replace("${version}", config.getJavaStaticSdkVersion()).replace("${target}", target),
-                omegaPath.resolve("${target}-libs-${version}.zip".replace("${version}", config.getJavaStaticSdkVersion()).replace("${target}", target)),
-                "javaStaticSdk", config.getJavaStaticSdkVersion(), "javaStaticSdk-" + target + ".md5");
+    private static void downloadJavaZip(String target, Path omegaPath, Configuration configuration) throws IOException {
+        Logger.logDebug("Process zip javaStaticSdk");
+        processZip(URL_JAVA_STATIC_SDK
+                        .replace("${version}", configuration.getJavaStaticSdkVersion())
+                        .replace("${target}", target),
+                omegaPath.resolve("${target}-libs-${version}.zip"
+                        .replace("${version}", configuration.getJavaStaticSdkVersion())
+                        .replace("${target}", target)),
+                "javaStaticSdk", configuration.getJavaStaticSdkVersion(), "javaStaticSdk-" + target + ".md5");
+        Logger.logDebug("Processing zip java done");
     }
 
-    private static void downloadJavaFXZip(String target, Path omegaPath, Config config) throws IOException {
-        LOGGER.info("Process zip javafxStaticSdk");
-        processZip(URL_JAVAFX_STATIC_SDK.replace("${version}", config.getJavafxStaticSdkVersion()).replace("${target}", target),
-                omegaPath.resolve("${target}-libsfx-${version}.zip".replace("${version}", config.getJavafxStaticSdkVersion()).replace("${target}", target)),
-                "javafxStaticSdk", config.getJavafxStaticSdkVersion(), "javafxStaticSdk-" + target + ".md5");
+    private static void downloadJavaFXZip(String target, Path omegaPath, Configuration configuration) throws IOException {
+        Logger.logDebug("Process zip javafxStaticSdk");
+        processZip(URL_JAVAFX_STATIC_SDK
+                        .replace("${version}", configuration.getJavafxStaticSdkVersion())
+                        .replace("${target}", target),
+                omegaPath.resolve("${target}-libsfx-${version}.zip"
+                        .replace("${version}", configuration.getJavafxStaticSdkVersion())
+                        .replace("${target}", target)),
+                "javafxStaticSdk", configuration.getJavafxStaticSdkVersion(), "javafxStaticSdk-" + target + ".md5");
 
-        System.err.println("Process zips done");
+        Logger.logDebug("Process zip javafx done");
     }
 
     private static void processZip(String urlZip, Path zipPath, String folder, String version, String name) throws IOException {

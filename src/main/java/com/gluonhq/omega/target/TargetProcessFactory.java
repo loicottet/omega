@@ -27,17 +27,35 @@
  */
 package com.gluonhq.omega.target;
 
+import com.gluonhq.omega.Configuration;
+import com.gluonhq.omega.util.Constants;
+import com.gluonhq.omega.util.Logger;
+
 import java.nio.file.Path;
-import java.util.List;
 
-public interface TargetConfiguration {
+public class TargetProcessFactory {
 
-    void compile(Path gvmPath, List<Path> classPath, String mainClassName, String appName, String target) throws Exception;
+    private static TargetProcess targetProcess;
 
-    void link(Path workDir, String appName, String target) throws Exception;
-
-    void run(Path workDir, String appName, String target) throws Exception;
-
-    List<String> getReleaseSymbolsList();
+    public static TargetProcess getTargetProcess(Configuration configuration, Path sourcePath) {
+        if (targetProcess == null) {
+            String target = configuration.getTarget().getOs();
+            switch (target) {
+                case Constants.TARGET_MAC:
+                    targetProcess = new MacosTargetProcess(sourcePath.resolve(Constants.SOURCE_MAC));
+                    break;
+                case Constants.TARGET_LINUX:
+                    targetProcess = new LinuxTargetProcess();
+                    break;
+                case Constants.TARGET_IOS:
+                    targetProcess = new IosTargetProcess(configuration, sourcePath.resolve(Constants.SOURCE_IOS));
+                    break;
+                default:
+                    throw new RuntimeException("Error: Target not supported for " + configuration.getTarget());
+            }
+        }
+        Logger.logDebug("Target Process: " + targetProcess);
+        return targetProcess;
+    }
 
 }

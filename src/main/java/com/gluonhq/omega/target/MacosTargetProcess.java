@@ -31,6 +31,7 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.PropertyListParser;
 import com.gluonhq.omega.Omega;
 import com.gluonhq.omega.SVMBridge;
+import com.gluonhq.omega.util.Constants;
 import com.gluonhq.omega.util.FileOps;
 import com.gluonhq.omega.util.Logger;
 import com.gluonhq.omega.util.NSDictionaryEx;
@@ -46,7 +47,7 @@ import java.util.List;
 
 import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
 
-public class MacosTargetConfiguration extends DarwinTargetConfiguration {
+public class MacosTargetProcess extends DarwinTargetProcess {
 
     private static final List<String>javafxJNIMacClassList = Arrays.asList(
             "com.sun.glass.ui.mac.MacApplication",
@@ -370,7 +371,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     private String minOSVersion = "10.14";
 
-    public MacosTargetConfiguration(Path macDir) {
+    public MacosTargetProcess(Path macDir) {
         this.rootPath = macDir;
         try {
             Files.createDirectories(macDir);
@@ -413,7 +414,7 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        Path workDir = this.gvmPath.getParent().resolve("mac").resolve(appName);
+        Path workDir = this.gvmPath.getParent().resolve(Constants.SOURCE_MAC).resolve(appName);
         Files.createDirectories(workDir);
         Logger.logDebug("Compiling additional sources to " + workDir);
         FileOps.copyResource("/native/macosx/AppDelegate.m", workDir.resolve("AppDelegate.m"));
@@ -439,22 +440,22 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
-    public void link(Path workDir, String appName, String target) throws Exception {
-        super.link(workDir, appName, target);
+    public void link(String appName) throws Exception {
+        super.link(appName);
         SVMBridge.linkSetup();
         Path o = FileOps.findObject(workDir, appName);
         Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
-        if ("llvm".equals(Omega.getConfig().getBackend())) {
+        if (Constants.BACKEND_LLVM.equals(Omega.getConfiguration().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
             Logger.logDebug("got llvm at: " + o2.toString());
         }
 
         Logger.logDebug("Linking at " + workDir.toString());
         Path gvmPath = workDir.getParent();
-        appPath = gvmPath.getParent().resolve("mac").resolve(appName + ".app");
-        Files.createDirectories(appPath.resolve("Contents").resolve("MacOS"));
+        appPath = gvmPath.getParent().resolve(Constants.APP_MAC).resolve(appName + ".app");
+        Path macOS = Files.createDirectories(appPath.resolve("Contents").resolve("MacOS"));
         tmpPath = workDir;
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
         linkBuilder.command().add("-ObjC");
@@ -462,16 +463,16 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
         linkBuilder.command().add(SdkDirType.MACOSX.getSDKPath());
         linkBuilder.command().add("-iframework" + SdkDirType.MACOSX.getSDKPath() + "/System/Library/Frameworks");
         linkBuilder.command().add("-arch");
-        linkBuilder.command().add("x86_64");
+        linkBuilder.command().add(Constants.AMD64_ARCH);
         linkBuilder.command().add("-o");
-        linkBuilder.command().add(appPath.resolve("Contents").resolve("MacOS").resolve(appName).toString());
+        linkBuilder.command().add(macOS.resolve(appName).toString());
         linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
-        linkBuilder.command().add(gvmPath.getParent().resolve("mac").resolve(appName).toString() + "/AppDelegate.o");
-        linkBuilder.command().add(gvmPath.getParent().resolve("mac").resolve(appName).toString() + "/launcher.o");
+        linkBuilder.command().add(gvmPath.getParent().resolve(Constants.APP_MAC).resolve(appName).toString() + "/AppDelegate.o");
+        linkBuilder.command().add(gvmPath.getParent().resolve(Constants.APP_MAC).resolve(appName).toString() + "/launcher.o");
 
         linkBuilder.command().add(o.toString());
         // LLVM
-        if ("llvm".equals(Omega.getConfig().getBackend()) && o2 != null) {
+        if (Constants.BACKEND_LLVM.equals(Omega.getConfiguration().getBackend()) && o2 != null) {
             linkBuilder.command().add(o2.toString());
         }
 
@@ -506,11 +507,11 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
     }
 
     @Override
-    public void run(Path workDir, String appName, String target) throws Exception {
-        super.run(workDir, appName, target);
+    public void run(String appName) throws Exception {
+        super.run(appName);
 
         Logger.logDebug("Running at " + workDir.toString());
-        Path mac = workDir.resolve("mac").resolve(appName + ".app").resolve("Contents").resolve("MacOS").resolve(appName);
+        Path mac = workDir.resolve(Constants.APP_MAC).resolve(appName + ".app").resolve("Contents").resolve("MacOS").resolve(appName);
         ProcessBuilder runBuilder = new ProcessBuilder(mac.toString());
         runBuilder.redirectErrorStream(true);
         runBuilder.directory(workDir.toFile());
@@ -540,13 +541,13 @@ public class MacosTargetConfiguration extends DarwinTargetConfiguration {
             NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
             if (!inited) {
                 // ModuleName not supported
-                String className = Omega.getConfig().getMainClassName();
+                String className = Omega.getConfiguration().getMainClassName();
                 if (className.contains("/")) {
                     className = className.substring(className.indexOf("/") + 1);
                 }
                 dict.put("CFBundleIdentifier", className);
-                dict.put("CFBundleExecutable", Omega.getConfig().getAppName());
-                dict.put("CFBundleName", Omega.getConfig().getAppName());
+                dict.put("CFBundleExecutable", Omega.getConfiguration().getAppName());
+                dict.put("CFBundleName", Omega.getConfiguration().getAppName());
                 dict.saveAsXML(plist);
             }
             dict.put("DTSDKName", xcodeUtil.getSDKName());

@@ -28,121 +28,76 @@
 
 package com.gluonhq.omega;
 
-import com.gluonhq.omega.target.IosTargetConfiguration;
-import com.gluonhq.omega.target.LinuxTargetConfiguration;
-import com.gluonhq.omega.target.MacosTargetConfiguration;
-import com.gluonhq.omega.target.TargetConfiguration;
+import com.gluonhq.omega.model.ProcessPaths;
+import com.gluonhq.omega.target.TargetProcess;
+import com.gluonhq.omega.target.TargetProcessFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Omega {
 
-    private static Path omegaPath;
-    private static Path gvmPath;
+    private static Configuration configuration;
+    private static ProcessPaths paths;
 
-    static boolean linux = false;
-    static boolean macHost = false;
-    private static Config config;
-
-    static {
-        String osname = System.getProperty("os.name");
-        System.err.println("SVMBridge, osname = "+osname);
-        if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-            linux = true;
-        } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-            macHost = true;
-        }
+    public static Configuration getConfiguration() {
+        return configuration;
     }
 
-    private static void setConfig(Config config) {
-        Omega.config = config;
-    }
-
-    public static Config getConfig() {
-        return config;
+    public static ProcessPaths getPaths() {
+        return paths;
     }
 
     /**
      * Runs LocalBuild on Mac, Linux or iOS
      *
-     * @param buildRoot Omega directory, (e.g. build/omega)
-     * @param config the required configuration
+     * @param buildRoot Client directory, (e.g. build/client)
+     * @param configuration the required configuration
      * @param cp the list of directories and jars that make up the class path
-     * @param target  the host machine, iOS sim or device
      * @throws Exception
      */
-    public static void nativeCompile(String buildRoot, Config config, String cp, String target) throws Exception {
-        prepareConfig(config);
-        prepareDirs(buildRoot);
+    public static void nativeCompile(String buildRoot, Configuration configuration, String cp) throws Exception {
+        configure(configuration);
+        paths = new ProcessPaths(buildRoot);
 
         List<Path> classPath = Stream.of(cp.split(File.pathSeparator))
                 .map(Paths::get)
                 .collect(Collectors.toList());
 
-        TargetConfiguration targetConfig = getTargetConfiguration(config, target);
-        targetConfig.compile(gvmPath, classPath, config.getMainClassName(), config.getAppName(), target);
+        TargetProcess targetProcess = TargetProcessFactory.getTargetProcess(configuration, paths.getSourcePath());
+        targetProcess.compile(classPath, configuration.getMainClassName(), configuration.getAppName());
     }
 
     /**
      * Runs LocalLink on Mac, Linux or iOS
-     * @param buildRoot Omega directory, (e.g. build/omega)
-     * @param workDir the directory of the application (e.g. build/omega/gvm/tmp)
-     * @param config the required configuration
-     * @param target  the host machine, iOS sim or device
+     * @param buildRoot Client directory, (e.g. build/client)
+     * @param configuration the required configuration
      * @throws Exception
      */
-    public static void nativeLink(String buildRoot, Path workDir, Config config, String target) throws Exception {
-        prepareConfig(config);
-        prepareDirs(buildRoot);
-        TargetConfiguration targetConfig = getTargetConfiguration(config, target);
-        SVMBridge.init();
-        SVMBridge.createReleaseSymbols(workDir.getParent(), targetConfig);
-        targetConfig.link(workDir, config.getAppName(), target);
+    public static void nativeLink(String buildRoot, Configuration configuration) throws Exception {
+        configure(configuration);
+        paths = new ProcessPaths(buildRoot);
+        TargetProcess targetProcess = TargetProcessFactory.getTargetProcess(configuration, paths.getSourcePath());
+        SVMBridge.createReleaseSymbols(paths.getGvmPath(), targetProcess);
+        targetProcess.link(configuration.getAppName());
     }
 
     /**
      * Runs LocalLink on Mac, Linux or iOS
-     * @param workDir Omega directory, (e.g. build/omega)
-     * @param config the required configuration
-     * @param target  the host machine, iOS sim or device
+     * @param buildRoot Client directory, (e.g. build/client)
+     * @param configuration the required configuration
      * @throws Exception
      */
-    public static void nativeRun(Path workDir, Config config, String target) throws Exception {
-        prepareConfig(config);
-        prepareDirs(workDir.toString());
+    public static void nativeRun(String buildRoot, Configuration configuration) throws Exception {
+        configure(configuration);
+        paths = new ProcessPaths(buildRoot);
 
-        TargetConfiguration targetConfig = getTargetConfiguration(config, target);
-        targetConfig.run(workDir, config.getAppName(), target);
-    }
-
-    /**
-     * Returns the target name based on the configuration.
-     * @param config the required configuration
-     * @return
-     */
-    public static String getTarget(Config config) {
-        String target = "";
-        if ("host".equals(config.getTarget())) {
-            String osname = System.getProperty("os.name");
-            if (osname.toLowerCase(Locale.ROOT).contains("linux")) {
-                target = "linux";
-            } else if (osname.toLowerCase(Locale.ROOT).contains("mac")) {
-                target = "macosx";
-            }
-        } else if ("ios".equals(Omega.config.getTarget()) || "ios-sim".equals(config.getTarget())) {
-            target = "ios";
-        } else {
-            throw new RuntimeException("No valid target: " + config.getTarget());
-        }
-        return target;
+        TargetProcess targetProcess = TargetProcessFactory.getTargetProcess(configuration, paths.getSourcePath());
+        targetProcess.run(configuration.getAppName());
     }
 
     /**
@@ -208,20 +163,17 @@ public class Omega {
             String javaStaticVersion = args[7];
             String javafxStaticSDKVersion = args[8];
 
-            Config config = new Config();
-            config.setGraalLibsVersion(graalLibsVersion);
-            config.setJavaStaticSdkVersion(javaStaticVersion);
-            config.setJavafxStaticSdkVersion(javafxStaticSDKVersion);
+            Configuration configuration = new Configuration();
+            configuration.setGraalLibsVersion(graalLibsVersion);
+            configuration.setJavaStaticSdkVersion(javaStaticVersion);
+            configuration.setJavafxStaticSdkVersion(javafxStaticSDKVersion);
 
-            config.setAppName(appName);
-            config.setMainClassName(mainClassName);
+            configuration.setAppName(appName);
+            configuration.setMainClassName(mainClassName);
 
-            SVMBridge.init();
+            Omega.nativeCompile(buildRoot, configuration, cp);
 
-            Omega.nativeCompile(buildRoot, config, cp, target);
-
-            Path workDir = Path.of(args[5]);
-            Omega.nativeLink(buildRoot, workDir, config, target);
+            Omega.nativeLink(buildRoot, configuration);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -229,45 +181,19 @@ public class Omega {
 
     // private
 
-    private static String prepareDirs(String buildRoot) {
-        String gvmDir = null;
-        try {
-            omegaPath = buildRoot != null && ! buildRoot.isEmpty() ?
-                    Paths.get(buildRoot) : Paths.get(System.getProperty("user.dir"));
-            String rootDir = omegaPath.toAbsolutePath().toString();
-
-            gvmPath = Paths.get(rootDir, "gvm");
-            gvmPath = Files.createDirectories(gvmPath);
-            gvmDir = gvmPath.toAbsolutePath().toString();
-            System.err.println("gvmDir = " + gvmDir);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static void configure(Configuration configuration) {
+        if (configuration == null) {
+            throw new RuntimeException("Error: configuration is null");
         }
-        return gvmDir;
-    }
-
-    private static void prepareConfig(Config config) {
-        if (config.getMainClassName() == null || config.getMainClassName().isEmpty()) {
-            throw new RuntimeException("MainClassName is not set");
+        if (configuration.getMainClassName() == null || configuration.getMainClassName().isEmpty()) {
+            throw new RuntimeException("Error: MainClassName is not set");
         }
-        if (config.getAppName() == null || config.getAppName().isEmpty()) {
-            throw new RuntimeException("AppName is not set");
+        if (configuration.getAppName() == null || configuration.getAppName().isEmpty()) {
+            throw new RuntimeException("Error: AppName is not set");
         }
-        setConfig(config);
-    }
-
-    private static TargetConfiguration getTargetConfiguration(Config config, String target) {
-        TargetConfiguration targetConfiguration;
-        if (target.startsWith("ios")) {
-            targetConfiguration = new IosTargetConfiguration(config, omegaPath.getParent().getParent().resolve("src").resolve("ios"));
-        } else if (macHost) {
-            targetConfiguration = new MacosTargetConfiguration(omegaPath.getParent().getParent().resolve("src").resolve("mac"));
-        } else if (linux) {
-            targetConfiguration = new LinuxTargetConfiguration();
-        } else {
-            throw new RuntimeException("target not found: "+target);
-        }
-        return targetConfiguration;
+        Omega.configuration = configuration;
+        System.err.println("Omega :: host triplet = " + configuration.getHost());
+        System.err.println("Omega :: target triplet = " + configuration.getTarget());
     }
 
 }

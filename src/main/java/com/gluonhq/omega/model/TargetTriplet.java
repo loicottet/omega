@@ -25,29 +25,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.gluonhq.omega.util;
+package com.gluonhq.omega.model;
 
-import com.gluonhq.omega.Omega;
+public class TargetTriplet {
 
-public class Logger {
+    private String arch;
+    private String vendor;
+    private String os;
 
-    public static void logInfo(String s) {
-        System.err.println(s);
+    public TargetTriplet(String arch, String vendor, String os) {
+        this.arch = arch;
+        this.vendor = vendor;
+        this.os = os;
     }
 
-    public static void logDebug(String s) {
-        if (Omega.getConfiguration().isVerbose()) {
-            System.err.println(s);
-        }
+    public String getArch() {
+        return arch;
     }
 
-    public static void logSevere(String s) {
-        System.err.println(s);
+    public void setArch(String arch) {
+        this.arch = arch;
     }
 
-    public static void logSevere(Throwable ex, String s) {
-        logSevere(s);
-        ex.printStackTrace();
-        throw new RuntimeException ("Severe Error " + ex);
+    public String getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public String getOs() {
+        return os;
+    }
+
+    public void setOs(String os) {
+        this.os = os;
+    }
+
+    @Override
+    public String toString() {
+        return arch + '-' + vendor + '-' + os;
     }
 }

@@ -39,7 +39,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract class DarwinTargetConfiguration extends AbstractTargetConfiguration {
+abstract class DarwinTargetProcess extends AbstractTargetProcess {
 
     private final static String SDK_BASE = "/Applications/Xcode.app/Contents/Developer/Platforms/";
 
