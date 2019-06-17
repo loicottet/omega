@@ -74,6 +74,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 import static com.gluonhq.omega.SVMBridge.USE_JAVAFX;
@@ -126,15 +127,6 @@ public class IosTargetProcess extends DarwinTargetProcess {
             "com.sun.javafx.font.FontConfigManager$FcCompFont",
             "com.sun.javafx.font.FontConfigManager$FontConfigFont",
             "com.sun.javafx.iio.ios.IosImageLoader"
-    );
-
-    private static final List<String> releaseSymbolsIOSList = Arrays.asList(
-            "_JNI_OnLoad*",
-            "_Java_com_sun*"
-    );
-
-    private static final List<String> releaseSymbolsFXIOSList = Arrays.asList(
-            "_Java_com_gluonhq*"
     );
 
     private static final List<String> javaCommonLibs = Arrays.asList(
@@ -220,14 +212,13 @@ public class IosTargetProcess extends DarwinTargetProcess {
     @Override
     public List<String> getReleaseSymbolsList() {
         ArrayList<String> answer = new ArrayList<>();
-        if (isSimulator()) {
-            answer.addAll(super.getReleaseSymbolsList());
-        }
-        answer.addAll(releaseSymbolsIOSList);
+        answer.addAll(super.getReleaseSymbolsList());
         if (USE_JAVAFX) {
             answer.addAll(getJavaFXSymbols());
         }
-        return answer;
+        return answer.stream()
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     @Override
