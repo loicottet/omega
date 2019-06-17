@@ -1,0 +1,29 @@
+image: openjdk:11
+
+pipelines:
+  pull-requests:
+    '**': # Runs as default for any branch not elsewhere defined
+      - step:
+          name: Build and release snapshot
+          caches:
+            - gradle
+          script:
+            - bash ./gradlew build
+  
+  branches:
+    master: # Only on master
+      - step:
+          name: Build and release snapshot
+          caches:
+            - gradle
+          script:
+            - bash ./gradlew assemble publish -PgluonNexusUsername=$NEXUS_USERNAME -PgluonNexusPassword=$NEXUS_PASSWORD
+          
+  tags:
+    '**': # Any tag
+      - step:
+          name: Build and release
+          caches:
+            - gradle
+          script:
+            - bash ./gradlew assemble publish -PgluonNexusUsername=$NEXUS_USERNAME -PgluonNexusPassword=$NEXUS_PASSWORD -PrepositoryUrl=https://nexus.gluonhq.com/nexus/content/repositories/releases
