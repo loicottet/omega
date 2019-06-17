@@ -62,7 +62,7 @@ public class Omega {
      */
     public static void nativeCompile(String buildRoot, Configuration configuration, String cp) throws Exception {
         configure(configuration);
-        paths = new ProcessPaths(buildRoot);
+        paths = new ProcessPaths(buildRoot, configuration.getTarget().getOs() + "-" + configuration.getTarget().getArch());
 
         List<Path> classPath = Stream.of(cp.split(File.pathSeparator))
                 .map(Paths::get)
@@ -80,7 +80,7 @@ public class Omega {
      */
     public static void nativeLink(String buildRoot, Configuration configuration) throws Exception {
         configure(configuration);
-        paths = new ProcessPaths(buildRoot);
+        paths = new ProcessPaths(buildRoot, configuration.getTarget().getOs() + "-" + configuration.getTarget().getArch());
         TargetProcess targetProcess = TargetProcessFactory.getTargetProcess(configuration, paths.getSourcePath());
         SVMBridge.createReleaseSymbols(paths.getGvmPath(), targetProcess);
         targetProcess.link(configuration.getAppName());
@@ -94,7 +94,7 @@ public class Omega {
      */
     public static void nativeRun(String buildRoot, Configuration configuration) throws Exception {
         configure(configuration);
-        paths = new ProcessPaths(buildRoot);
+        paths = new ProcessPaths(buildRoot, configuration.getTarget().getOs() + "-" + configuration.getTarget().getArch());
 
         TargetProcess targetProcess = TargetProcessFactory.getTargetProcess(configuration, paths.getSourcePath());
         targetProcess.run(configuration.getAppName());

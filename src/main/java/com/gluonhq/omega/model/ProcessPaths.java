@@ -39,6 +39,7 @@ public class ProcessPaths {
 
     private String buildRoot;
     private Path clientPath;
+    private Path appPath;
     private Path gvmPath;
     private Path tmpPath;
     private Path sourcePath;
@@ -46,22 +47,24 @@ public class ProcessPaths {
     /**
      * |-- build or target
      *     |-- client                   <-- buildRoot
-     *         |-- gvm
-     *             |-- tmp
-     *             |-- lib
-     *         |-- mac or linux or ios
+     *         |-- $app                 <-- $OS-$ARCH
+     *             |-- gvm
+     *                 |-- tmp
+     *                 |-- lib
      *             |-- appName
      * |-- src
      *     |-- mac or ios
+     *     |-- main
      */
 
-    public ProcessPaths(String buildRoot) {
+    public ProcessPaths(String buildRoot, String app) {
         this.buildRoot = buildRoot;
         try {
             clientPath = buildRoot != null && ! buildRoot.isEmpty() ?
                     Paths.get(buildRoot) : Paths.get(System.getProperty("user.dir"));
 
-            gvmPath = Files.createDirectories(clientPath.resolve(Constants.GVM_PATH));
+            appPath = Files.createDirectories(clientPath.resolve(app));
+            gvmPath = Files.createDirectories(appPath.resolve(Constants.GVM_PATH));
             tmpPath = Files.createDirectories(gvmPath.resolve(Constants.TMP_PATH));
             sourcePath = clientPath.getParent().getParent().resolve(Constants.SOURCE_PATH);
             Logger.logDebug("gvmDir = " + gvmPath.toString());
@@ -84,6 +87,14 @@ public class ProcessPaths {
 
     public void setClientPath(Path clientPath) {
         this.clientPath = clientPath;
+    }
+
+    public Path getAppPath() {
+        return appPath;
+    }
+
+    public void setAppPath(Path appPath) {
+        this.appPath = appPath;
     }
 
     public Path getGvmPath() {

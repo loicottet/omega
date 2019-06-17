@@ -409,12 +409,12 @@ public class MacosTargetProcess extends DarwinTargetProcess {
     @Override
     public void compileApplication() throws Exception {
         Logger.logDebug("Compiling MacOS application");
-        SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
+        SVMBridge.compile(classPath, mainClassName, appName,this);
     }
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        Path workDir = this.gvmPath.getParent().resolve(Constants.SOURCE_MAC).resolve(appName);
+        Path workDir = Omega.getPaths().getGvmPath().resolve(appName);
         Files.createDirectories(workDir);
         Logger.logDebug("Compiling additional sources to " + workDir);
         FileOps.copyResource("/native/macosx/AppDelegate.m", workDir.resolve("AppDelegate.m"));
@@ -453,8 +453,8 @@ public class MacosTargetProcess extends DarwinTargetProcess {
         }
 
         Logger.logDebug("Linking at " + workDir.toString());
-        Path gvmPath = workDir.getParent();
-        appPath = gvmPath.getParent().resolve(Constants.APP_MAC).resolve(appName + ".app");
+        appPath = Omega.getPaths().getAppPath().resolve(appName + ".app");
+        Path mac = gvmPath.resolve(appName);
         Path macOS = Files.createDirectories(appPath.resolve("Contents").resolve("MacOS"));
         tmpPath = workDir;
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
@@ -467,8 +467,8 @@ public class MacosTargetProcess extends DarwinTargetProcess {
         linkBuilder.command().add("-o");
         linkBuilder.command().add(macOS.resolve(appName).toString());
         linkBuilder.command().add("-Wl,-exported_symbols_list," + gvmPath.toString() + "/release.symbols");
-        linkBuilder.command().add(gvmPath.getParent().resolve(Constants.APP_MAC).resolve(appName).toString() + "/AppDelegate.o");
-        linkBuilder.command().add(gvmPath.getParent().resolve(Constants.APP_MAC).resolve(appName).toString() + "/launcher.o");
+        linkBuilder.command().add(mac.toString() + "/AppDelegate.o");
+        linkBuilder.command().add(mac.toString() + "/launcher.o");
 
         linkBuilder.command().add(o.toString());
         // LLVM
@@ -486,7 +486,7 @@ public class MacosTargetProcess extends DarwinTargetProcess {
         linkBuilder.redirectErrorStream(true);
         String linkcmds = String.join(" ", linkBuilder.command());
         Logger.logDebug("linkcmds = " + linkcmds);
-        FileOps.createScript(gvmPath.resolve("link.sh"), linkcmds);
+        FileOps.createScript(this.gvmPath.resolve("link.sh"), linkcmds);
 
         Process linkProcess = linkBuilder.start();
         FileOps.mergeProcessOutput(linkProcess.getInputStream());
@@ -511,7 +511,7 @@ public class MacosTargetProcess extends DarwinTargetProcess {
         super.run(appName);
 
         Logger.logDebug("Running at " + workDir.toString());
-        Path mac = workDir.resolve(Constants.APP_MAC).resolve(appName + ".app").resolve("Contents").resolve("MacOS").resolve(appName);
+        Path mac = Omega.getPaths().getAppPath().resolve(appName + ".app").resolve("Contents").resolve("MacOS").resolve(appName);
         ProcessBuilder runBuilder = new ProcessBuilder(mac.toString());
         runBuilder.redirectErrorStream(true);
         runBuilder.directory(workDir.toFile());

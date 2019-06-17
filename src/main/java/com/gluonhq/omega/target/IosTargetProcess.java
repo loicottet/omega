@@ -234,7 +234,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
     public void compileApplication() throws Exception {
         setupArch();
         Logger.logDebug("Compiling ios application");
-        SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
+        SVMBridge.compile(classPath, mainClassName, appName,this);
     }
 
     @Override
@@ -249,14 +249,14 @@ public class IosTargetProcess extends DarwinTargetProcess {
     @Override
     public void compileAdditionalSources() throws Exception {
         setupArch();
-        libPath = this.gvmPath.resolve(Constants.LIB_PATH);
+        libPath = Omega.getPaths().getGvmPath().resolve(Constants.LIB_PATH);
         Files.createDirectories(libPath);
         Logger.logDebug("Extracting native libs to: " + libPath);
         classPath.stream()
             .filter(s -> s.toString().endsWith(".jar"))
             .forEach(this::copyNativeLibFiles);
 
-        this.workDir = this.gvmPath.getParent().resolve(Constants.SOURCE_IOS).resolve(appName + ".app");
+        this.workDir = Omega.getPaths().getGvmPath().resolve(appName);
         Files.createDirectories(workDir);
         Logger.logDebug("Compiling additional sources to " + workDir);
         FileOps.copyResource("/native/ios/AppDelegate" + (isSimulator() ? "-sim" : "") + ".m", workDir.resolve("AppDelegate.m"));
@@ -278,7 +278,6 @@ public class IosTargetProcess extends DarwinTargetProcess {
         processBuilder.command().add("thread.m");
         processBuilder.command().add("AppDelegate.m");
         processBuilder.directory(workDir.toFile());
-        String cmds = String.join(" ", processBuilder.command());
         processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
         FileOps.mergeProcessOutput(p.getInputStream());
@@ -302,17 +301,16 @@ public class IosTargetProcess extends DarwinTargetProcess {
         Logger.logDebug("got o at: " + o.toString());
         // LLVM
         Path o2 = null;
-        if ("llvm".equals(Omega.getConfiguration().getBackend())) {
+        if (Constants.BACKEND_LLVM.equals(Omega.getConfiguration().getBackend())) {
             o2 = FileOps.findObject(workDir, "llvm");
             Logger.logDebug("got llvm at: " + o2.toString());
         }
 
         Logger.logDebug("Linking at " + workDir.toString());
-        Path gvmPath = workDir.getParent();
-        Path omegaPath = gvmPath.getParent();
-        appPath = omegaPath.resolve(Constants.APP_IOS).resolve(appName + ".app");
+        appPath = Omega.getPaths().getAppPath().resolve(appName + ".app");
         Files.createDirectories(appPath);
-        libPath = omegaPath.resolve(Constants.GVM_PATH).resolve(Constants.LIB_PATH);
+        Path ios = Omega.getPaths().getGvmPath().resolve(appName);
+        libPath = Omega.getPaths().getGvmPath().resolve(Constants.LIB_PATH);
         Logger.logDebug("Lib Path at " + libPath.toString() + ", files: " + Files.list(libPath).count());
 
         ProcessBuilder linkBuilder = new ProcessBuilder("clang");
@@ -339,9 +337,9 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         }
 
-        linkBuilder.command().add(appPath.toString() + "/AppDelegate.o");
-        linkBuilder.command().add(appPath.toString() + "/main.o");
-        linkBuilder.command().add(appPath.toString() + "/thread.o");
+        linkBuilder.command().add(ios.toString() + "/AppDelegate.o");
+        linkBuilder.command().add(ios.toString() + "/main.o");
+        linkBuilder.command().add(ios.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
         // LLVM
         if (Constants.BACKEND_LLVM.equals(Omega.getConfiguration().getBackend()) && o2 != null) {
@@ -407,14 +405,14 @@ public class IosTargetProcess extends DarwinTargetProcess {
         setupArch();
 
         Logger.logDebug("Running at " + workDir.toString());
-        appPath = workDir.resolve(Constants.APP_IOS).resolve(appName + ".app");
+        appPath = Omega.getPaths().getAppPath().resolve(appName + ".app");
         appId = appName;
 
         if (isSimulator()) {
             launchOnSimulator(appPath.toString());
         } else {
             try {
-                tmpPath = workDir.resolve(Constants.GVM_PATH).resolve(Constants.TMP_PATH);
+                tmpPath = Omega.getPaths().getTmpPath();
                 NSDictionaryEx dict = new NSDictionaryEx(tmpPath.resolve("Info.plist").toFile());
                 bundleId = dict.getEntrySet().stream()
                         .filter(e -> e.getKey().equals("CFBundleIdentifier"))

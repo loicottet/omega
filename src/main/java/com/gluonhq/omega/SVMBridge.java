@@ -27,6 +27,7 @@
  */
 package com.gluonhq.omega;
 
+import com.gluonhq.omega.model.ProcessPaths;
 import com.gluonhq.omega.target.AbstractTargetProcess;
 import com.gluonhq.omega.target.LinuxTargetProcess;
 import com.gluonhq.omega.target.MacosTargetProcess;
@@ -150,11 +151,12 @@ public class SVMBridge {
         }
     }
 
-    public static void compile(Path workingDir, List<Path> gClassdir, String className, String appName,
+    public static void compile(List<Path> gClassdir, String className, String appName,
                                AbstractTargetProcess targetProcess) throws Exception {
-        linkSetup();
+        init();
         SVMBridge.targetProcess = targetProcess;
-        deleteDirectory(workingDir.resolve(Constants.TMP_PATH).toFile());
+        ProcessPaths paths = Omega.getPaths();
+        deleteDirectory(paths.getTmpPath().toFile());
 
         mainClass = className;
         // ModuleName not supported
@@ -163,7 +165,7 @@ public class SVMBridge {
         }
         Logger.logDebug("mainClass: " + mainClass);
 
-        workDir = workingDir;
+        workDir = paths.getGvmPath();
         Logger.logDebug("workDir: " + workDir);
 
         SVMBridge.appName = appName;
@@ -287,8 +289,7 @@ public class SVMBridge {
         List<String> bundles = getBundlesList();
         bundles.addAll(Omega.getConfiguration().getBundlesList());
         if (! bundles.isEmpty()) {
-            runtimeArgs.add("-H:IncludeResourceBundles=" +
-                    bundles.stream().collect(Collectors.joining(",")));
+            runtimeArgs.add("-H:IncludeResourceBundles=" + String.join(",", bundles));
         }
         compileBuilder.command().addAll(runtimeArgs);
 
@@ -405,7 +406,7 @@ public class SVMBridge {
         if (targetProcess.isCrossCompile() || Constants.HOST_MAC.equals(Omega.getConfiguration().getHost().getOs())) {
             runtimeArgs.add("-H:+SharedLibrary");
         }
-        runtimeArgs.add("-H:TempDirectory=" + workDir.resolve("tmp").toFile().getAbsolutePath());
+        runtimeArgs.add("-H:TempDirectory=" + Omega.getPaths().getTmpPath().toFile().getAbsolutePath());
         if (! CUSTOM_DELAY_INIT_LIST.isEmpty()) {
             String classes = CUSTOM_DELAY_INIT_LIST.stream()
                     .map(s -> s + ":build_time")
@@ -538,10 +539,6 @@ public class SVMBridge {
             bw.write("\n");
         }
         bw.write("  }\n");
-    }
-
-    private static Path getJavaHome() {
-        return Paths.get(System.getProperty("java.home"));
     }
 
     public static List<String> getBundlesList() {

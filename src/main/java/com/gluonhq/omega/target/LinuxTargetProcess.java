@@ -102,12 +102,12 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
 
     public void compileApplication() throws Exception {
         Logger.logDebug("Compiling application for Linux");
-        SVMBridge.compile(gvmPath, classPath, mainClassName, appName,this);
+        SVMBridge.compile(classPath, mainClassName, appName,this);
     }
 
     @Override
     public void compileAdditionalSources() throws Exception {
-        Path workDir = this.gvmPath.getParent().resolve("linux").resolve(appName);
+        Path workDir = Omega.getPaths().getGvmPath().resolve(appName);
         Logger.logDebug("Compiling additional sources to " + workDir);
         Files.createDirectories(workDir);
         FileOps.copyResource("/native/linux/launcher.c", workDir.resolve("launcher.c"));
@@ -143,8 +143,7 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
         }
 
         Logger.logDebug("Linking at " + workDir.toString());
-        Path gvmPath = workDir.getParent();
-        Path linux = gvmPath.getParent().resolve("linux").resolve(appName);
+        Path linux = Omega.getPaths().getGvmPath().resolve(appName);
 
         ProcessBuilder linkBuilder = new ProcessBuilder("gcc");
         linkBuilder.command().add("-rdynamic");
@@ -173,7 +172,7 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
         linkBuilder.command().add("-u");
         linkBuilder.command().add("Java_com_sun_glass_ui_gtk_GtkView__1create");
         linkBuilder.command().add("-o");
-        linkBuilder.command().add(linux.toString() + "/" + appName);
+        linkBuilder.command().add(Omega.getPaths().getAppPath().toString() + "/" + appName);
         linkBuilder.command().add(linux.toString() + "/launcher.o");
         linkBuilder.command().add(linux.toString() + "/thread.o");
         linkBuilder.command().add(o.toString());
@@ -208,8 +207,8 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
         super.run(appName);
 
         Logger.logDebug("Running at " + workDir.toString());
-        Path mac = workDir.resolve("linux").resolve(appName);
-        ProcessBuilder runBuilder = new ProcessBuilder(mac.toString() + "/" + appName);
+        Path linux = Omega.getPaths().getAppPath().resolve(appName);
+        ProcessBuilder runBuilder = new ProcessBuilder(linux.toString() + "/" + appName);
         runBuilder.directory(workDir.toFile());
         Process start = runBuilder.start();
 

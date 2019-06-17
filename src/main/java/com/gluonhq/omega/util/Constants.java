@@ -51,6 +51,7 @@ public class Constants {
      *
      */
     public static final String APP_MAC = "mac";
+    public static final String APP_LINUX = "linux";
     public static final String APP_IOS = "ios";
 
     /**

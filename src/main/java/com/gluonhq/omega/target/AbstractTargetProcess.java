@@ -314,6 +314,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
 
     @Override
     public void link(String appName) throws Exception {
+        this.gvmPath = Omega.getPaths().getGvmPath();
         this.workDir = Omega.getPaths().getTmpPath();
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
