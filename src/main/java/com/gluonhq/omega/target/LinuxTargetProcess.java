@@ -210,6 +210,7 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
         Path linux = Omega.getPaths().getAppPath().resolve(appName);
         ProcessBuilder runBuilder = new ProcessBuilder(linux.toString() + "/" + appName);
         runBuilder.directory(workDir.toFile());
+        runBuilder.redirectErrorStream(true);
         Process start = runBuilder.start();
 
         FileOps.mergeProcessOutput(start.getInputStream());

@@ -419,6 +419,7 @@ public class SVMBridge {
                 "-H:Name=" + appName,
                 "-H:+ReportUnsupportedElementsAtRuntime",
                 "-H:+AddAllCharsets",
+                "-H:+ExitAfterWrite",
                 "-H:+AllowIncompleteClasspath",
                 "-H:EnableURLProtocols=http,https"));
 
