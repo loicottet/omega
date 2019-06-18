@@ -949,7 +949,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
         Files.copy(provisioningProfilePath, dest, REPLACE_EXISTING);
         boolean taskAllow = getProvisioningProfile().isDevelopment();
         Logger.logDebug("ProvisioningProfile for Development: " + taskAllow);
-        return codesignApp(getOrCreateEntitlementsPList(taskAllow, appId), appDir);
+        return codesignApp(getOrCreateEntitlementsPList(taskAllow, bundleId), appDir);
     }
 
     private Pointer lockDown() {
