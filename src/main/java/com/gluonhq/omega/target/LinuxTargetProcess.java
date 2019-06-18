@@ -208,7 +208,7 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
 
         Logger.logDebug("Running at " + workDir.toString());
         Path linux = Omega.getPaths().getAppPath().resolve(appName);
-        ProcessBuilder runBuilder = new ProcessBuilder(linux.toString() + "/" + appName);
+        ProcessBuilder runBuilder = new ProcessBuilder(linux.toString());
         runBuilder.directory(workDir.toFile());
         runBuilder.redirectErrorStream(true);
         Process start = runBuilder.start();
