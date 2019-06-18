@@ -211,6 +211,7 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
         Path mac = workDir.resolve("linux").resolve(appName);
         ProcessBuilder runBuilder = new ProcessBuilder(mac.toString() + "/" + appName);
         runBuilder.directory(workDir.toFile());
+        runBuilder.redirectErrorStream(true);
         Process start = runBuilder.start();
 
         FileOps.mergeProcessOutput(start.getInputStream());
