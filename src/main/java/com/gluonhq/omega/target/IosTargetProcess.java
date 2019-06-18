@@ -677,7 +677,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
         Path provisioningProfilePath = provisioningProfile.getPath();
         Path dest = appPath.resolve("embedded.mobileprovision");
         Files.copy(provisioningProfilePath, dest, REPLACE_EXISTING);
-        codesignApp(getOrCreateEntitlementsPList(true, appId), appPath);
+        codesignApp(getOrCreateEntitlementsPList(true, bundleId), appPath);
     }
 
     private boolean codesignApp(Path entitlementsPList, Path appDir) throws IOException {
