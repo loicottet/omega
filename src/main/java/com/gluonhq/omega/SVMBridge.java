@@ -395,7 +395,6 @@ public class SVMBridge {
 
         runtimeArgs = new ArrayList<>(Arrays.asList(
                 "-imagecp", cp,
-                "-H:Path=" + workDir,
                 "-H:CLibraryPath=" + Paths.get(GRAALSDK).resolve("svm/clibraries/" + hostedNative).toFile().getAbsolutePath(),
                 "-H:Class=" + mainClass,
                 "-H:+ReportExceptionStackTraces",
