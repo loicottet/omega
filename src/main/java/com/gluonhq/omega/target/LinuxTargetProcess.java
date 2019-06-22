@@ -114,6 +114,9 @@ public class LinuxTargetProcess extends AbstractTargetProcess {
         FileOps.copyResource("/native/linux/thread.c", workDir.resolve("thread.c"));
         ProcessBuilder processBuilder = new ProcessBuilder("gcc");
         processBuilder.command().add("-c");
+        if (Omega.getConfiguration().isVerbose()) {
+            processBuilder.command().add("-DGVM_VERBOSE");
+        }
         processBuilder.command().add("launcher.c");
         processBuilder.command().add("thread.c");
         processBuilder.directory(workDir.toFile());

@@ -32,7 +32,9 @@
 extern void outBox(int argc, char** argv);
 
 int main(int argc, char** argv) {
-    fprintf(stderr, "Hello, JAVA main, argc = %d, argv = %p\n", argc, argv);
+    #ifdef GVM_VERBOSE
+      fprintf(stderr, "Hello, JAVA main, argc = %d, argv = %p\n", argc, argv);
+    #endif
     outBox(argc, argv);
 }
 

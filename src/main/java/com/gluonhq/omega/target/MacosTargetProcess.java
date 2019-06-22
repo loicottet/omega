@@ -424,6 +424,9 @@ public class MacosTargetProcess extends DarwinTargetProcess {
         processBuilder.command().add("-c");
         processBuilder.command().add("-isysroot");
         processBuilder.command().add(SdkDirType.MACOSX.getSDKPath());
+        if (Omega.getConfiguration().isVerbose()) {
+            processBuilder.command().add("-DGVM_VERBOSE");
+        }
         processBuilder.command().add("AppDelegate.m");
         processBuilder.command().add("launcher.c");
         processBuilder.directory(workDir.toFile());
