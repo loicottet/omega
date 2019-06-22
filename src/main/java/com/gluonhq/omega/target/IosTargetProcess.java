@@ -268,6 +268,9 @@ public class IosTargetProcess extends DarwinTargetProcess {
         processBuilder.command().add("main.m");
         processBuilder.command().add("thread.m");
         processBuilder.command().add("AppDelegate.m");
+        if (Omega.getConfiguration().isVerbose()) {
+            processBuilder.command().add("-DGVM_VERBOSE");
+        }
         processBuilder.directory(workDir.toFile());
         processBuilder.redirectErrorStream(true);
         Process p = processBuilder.start();
