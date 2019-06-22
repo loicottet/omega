@@ -374,8 +374,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
         int result = linkProcess.waitFor();
         Logger.logDebug("result of linking = "+result);
         if (result != 0) {
-            Logger.logSevere ("Linking failed, non-fatal");
-            // throw new RuntimeException("Error linking");
+             throw new RuntimeException("Error linking");
         }
 
         appId = appName;
