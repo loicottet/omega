@@ -136,11 +136,12 @@ public class IosTargetProcess extends DarwinTargetProcess {
             "-lzip", "-lnet", "-lj2pkcs11", "-lsunec");
 
     private static final List<String> frameworkLibs = Arrays.asList(
-            "-Wl,-framework,Foundation", "-Wl,-framework,UIKit", "-Wl,-framework,CoreGraphics", "-Wl,-framework,MobileCoreServices",
-            "-Wl,-framework,OpenGLES", "-Wl,-framework,CoreText", "-Wl,-framework,ImageIO",
-            "-Wl,-framework,UserNotifications", "-Wl,-framework,CoreBluetooth", "-Wl,-framework,CoreLocation",
-            "-Wl,-framework,CoreMedia", "-Wl,-framework,AVFoundation", "-Wl,-framework,Accelerate",
-            "-Wl,-framework,CoreVideo", "-Wl,-framework,QuartzCore");
+            "Foundation", "UIKit", "CoreGraphics", "MobileCoreServices",
+            "OpenGLES", "CoreText", "ImageIO",
+            "UserNotifications", "CoreBluetooth", "CoreLocation",
+            "CoreMedia", "AVFoundation", "Accelerate",
+            "CoreVideo", "CoreMotion", "QuartzCore",
+            "AudioToolbox", "MediaPlayer", "AVKit", "StoreKit");
 
     private static final List<String> javafxLibs = Arrays.asList(
             "prism_es2", "glass", "javafx_font", "prism_common", "javafx_iio");
@@ -361,7 +362,9 @@ public class IosTargetProcess extends DarwinTargetProcess {
                 .map(s -> s.substring(3, s.lastIndexOf(".")))
                 .forEach(s -> linkBuilder.command().add("-l" + s));
 
-        linkBuilder.command().addAll(frameworkLibs);
+        linkBuilder.command().addAll(frameworkLibs.stream()
+                .map(f -> "-Wl,-framework," + f)
+                .collect(Collectors.toList()));
 
         linkBuilder.directory(workDir.toFile());
         linkBuilder.redirectErrorStream(true);
