@@ -35,49 +35,43 @@ extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece4
 
 @end
 
-#ifdef GVM_VERBOSE
-bool verbose = YES;
-#else
-bool verbose = NO;
-#endif
-
 @implementation AppDelegate
 
 -(void)startVM:(id)selector {
-    if (verbose) fprintf(stderr, "Starting vm...\n");
+    gvmlog(@"Starting vm...");
     startGVM();
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    fprintf(stderr, "UIApplication launched!\n");
+    gvmlog(@"UIApplication launched!");
     [self performSelectorInBackground:@selector(startVM:) withObject:NULL];
-    fprintf(stderr, "UIApplication started GVM in a separate thread\n");
+    gvmlog(@"UIApplication started GVM in a separate thread");
     return YES;
 }
 
 
 - (void)applicationWillResignActive:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationWillResignActive\n");
+    gvmlog(@"[UIAPP] applicationWillResignActive");
 }
 
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationDidEnterBackground\n");
+    gvmlog(@"[UIAPP] applicationDidEnterBackground");
 }
 
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationWillEnterForeground\n");
+    gvmlog(@"[UIAPP] applicationWillEnterForeground");
 }
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationDidBecomeActive\n");
+    gvmlog(@"[UIAPP] applicationDidBecomeActive");
 }
 
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationWillTerminate\n");
+    gvmlog(@"[UIAPP] applicationWillTerminate");
 }
 
 
@@ -85,11 +79,10 @@ bool verbose = NO;
 
 
 int startGVM() {
-    if (verbose) fprintf(stderr, "Starting GVM for ios\n");
+    gvmlog(@"Starting GVM for ios");
 
     (*IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e)(1);
 
-    if (verbose) fprintf(stderr, "Finished running GVM, done with isolatehread\n");
+    gvmlog(@"Finished running GVM, done with isolatehread");
     return 0;
 }
-
