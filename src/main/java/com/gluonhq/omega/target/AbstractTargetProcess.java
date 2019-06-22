@@ -87,6 +87,8 @@ public abstract class AbstractTargetProcess implements TargetProcess {
     private static final List<String> javafxReflectionClassList = new ArrayList<>(Arrays.asList(
             "java.lang.Runnable",
             "java.net.InetAddress",
+            "java.nio.ByteBuffer",
+            "java.nio.ByteOrder",
             "javafx.scene.control.Control",
             "javafx.scene.layout.AnchorPane",
             "javafx.scene.layout.FlowPane",
