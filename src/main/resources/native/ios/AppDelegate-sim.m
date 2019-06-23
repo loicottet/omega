@@ -35,44 +35,43 @@ extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece4
 
 @end
 
-
 @implementation AppDelegate
 
 -(void)startVM:(id)selector {
-    fprintf(stderr, "Starting vm...\n");
+    gvmlog(@"Starting vm...");
     startGVM();
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    fprintf(stderr, "UIApplication launched!\n");
+    gvmlog(@"UIApplication launched!");
     [self performSelectorInBackground:@selector(startVM:) withObject:NULL];
-    fprintf(stderr, "UIApplication started GVM in a separate thread\n");
+    gvmlog(@"UIApplication started GVM in a separate thread");
     return YES;
 }
 
 
 - (void)applicationWillResignActive:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationWillResignActive\n");
+    gvmlog(@"[UIAPP] applicationWillResignActive");
 }
 
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationDidEnterBackground\n");
+    gvmlog(@"[UIAPP] applicationDidEnterBackground");
 }
 
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationWillEnterForeground\n");
+    gvmlog(@"[UIAPP] applicationWillEnterForeground");
 }
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationDidBecomeActive\n");
+    gvmlog(@"[UIAPP] applicationDidBecomeActive");
 }
 
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    fprintf(stderr, "[UIAPP] applicationWillTerminate\n");
+    gvmlog(@"[UIAPP] applicationWillTerminate");
 }
 
 
@@ -80,21 +79,11 @@ extern void *IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece4
 
 
 int startGVM() {
-    int ret;
-    fprintf(stderr, "Starting GVM\n");
-/*
-    fprintf(stderr, "Starting GVM, create isolatehread\n");
-    graal_create_isolate_params_t isolate_params;
-    graal_isolate_t* isolate;
-    graal_isolatethread_t* isolatethread;
-    ret = graal_create_isolate(&isolate_params, &isolate, &isolatethread);
-    if (ret != 0) {
-        fprintf(stderr, "Whoops, can't create isolate\n");
-    }
-*/
+    gvmlog(@"Starting GVM");
+
     (*IsolateEnterStub__JavaMainWrapper__run__5087f5482cc9a6abc971913ece43acb471d2631b__a61fe6c26e84dd4037e4629852b5488bfcc16e7e)(1);
 
-    fprintf(stderr, "Finished running GVM, done with isolatehread\n");
+    gvmlog(@"Finished running GVM, done with isolatehread");
     return 0;
 }
 

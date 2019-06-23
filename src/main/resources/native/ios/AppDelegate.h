@@ -26,6 +26,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #import <UIKit/UIKit.h>
+#include <stdarg.h>
+
+static __inline__ void gvmlog(NSString* format, ...)
+{
+    va_list argList;
+    va_start(argList, format);
+    NSString* formattedMessage = [[NSString alloc] initWithFormat: format arguments: argList];
+    va_end(argList);
+    fprintf(stderr, "[GVM] %s\n", [formattedMessage UTF8String]);
+    [formattedMessage release];
+}
+
+#ifdef GVM_VERBOSE
+    #define gvmlog(MSG, ...) gvmlog(MSG, ## __VA_ARGS__ )
+#else
+    #define gvmlog(MSG, ...) (void) 0
+#endif
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
