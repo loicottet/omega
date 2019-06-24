@@ -563,7 +563,8 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         }
         Logger.logSevere("Error: no bundleId was found");
-        return "";
+        throw new RuntimeException("No bundleId was found.\n " +
+                "Please check the src/ios/Default-info.plist file and make sure CFBundleIdentifier key exists");
     }
 
     private String getExecutableName(String appName) {
@@ -586,7 +587,8 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         }
         Logger.logSevere("Error: ExecutableName was found");
-        return "";
+        throw new RuntimeException("No executable name was found.\n " +
+                "Please check the src/ios/Default-info.plist file and make sure CFBundleExecutable key exists");
     }
 
     private void processInfoPlist(Path workDir) throws IOException {
