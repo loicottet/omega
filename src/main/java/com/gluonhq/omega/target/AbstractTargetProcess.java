@@ -259,7 +259,9 @@ public abstract class AbstractTargetProcess implements TargetProcess {
             "com.sun.glass.ui.Menu",
             "com.sun.glass.ui.MenuItem$Callback",
             "com.sun.glass.ui.View",
-            "com.sun.glass.ui.Size"
+            "com.sun.glass.ui.Size",
+            "com.sun.glass.ui.CommonDialogs$ExtensionFilter",
+            "com.sun.glass.ui.CommonDialogs$FileChooserResult"
     ));
 
     private static final List<String> releaseSymbolsList = Arrays.asList(
