@@ -42,6 +42,7 @@ public class ProcessPaths {
     private Path appPath;
     private Path gvmPath;
     private Path tmpPath;
+    private Path logPath;
     private Path sourcePath;
 
     /**
@@ -51,6 +52,7 @@ public class ProcessPaths {
      *             |-- gvm
      *                 |-- tmp
      *                 |-- lib
+     *                 |-- log
      *             |-- appName
      * |-- src
      *     |-- mac or ios
@@ -66,6 +68,7 @@ public class ProcessPaths {
             appPath = Files.createDirectories(clientPath.resolve(app));
             gvmPath = Files.createDirectories(appPath.resolve(Constants.GVM_PATH));
             tmpPath = Files.createDirectories(gvmPath.resolve(Constants.TMP_PATH));
+            logPath = Files.createDirectories(gvmPath.resolve(Constants.LOG_PATH));
             sourcePath = clientPath.getParent().getParent().resolve(Constants.SOURCE_PATH);
             Logger.logDebug("gvmDir = " + gvmPath.toString());
         } catch (IOException e) {
@@ -77,47 +80,27 @@ public class ProcessPaths {
         return buildRoot;
     }
 
-    public void setBuildRoot(String buildRoot) {
-        this.buildRoot = buildRoot;
-    }
-
     public Path getClientPath() {
         return clientPath;
-    }
-
-    public void setClientPath(Path clientPath) {
-        this.clientPath = clientPath;
     }
 
     public Path getAppPath() {
         return appPath;
     }
 
-    public void setAppPath(Path appPath) {
-        this.appPath = appPath;
-    }
-
     public Path getGvmPath() {
         return gvmPath;
-    }
-
-    public void setGvmPath(Path gvmPath) {
-        this.gvmPath = gvmPath;
     }
 
     public Path getSourcePath() {
         return sourcePath;
     }
 
-    public void setSourcePath(Path sourcePath) {
-        this.sourcePath = sourcePath;
-    }
-
     public Path getTmpPath() {
         return tmpPath;
     }
 
-    public void setTmpPath(Path tmpPath) {
-        this.tmpPath = tmpPath;
+    public Path getLogPath() {
+        return logPath;
     }
 }
