@@ -48,6 +48,10 @@ public class Logger {
         LOGGER.fine(s);
     }
 
+    public static void logFinest(String s) {
+        LOGGER.finest(s);
+    }
+
     public static void logSevere(String s) {
         LOGGER.severe(s);
     }

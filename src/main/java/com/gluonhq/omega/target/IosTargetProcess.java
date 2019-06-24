@@ -702,7 +702,8 @@ public class IosTargetProcess extends DarwinTargetProcess {
     private void signApp() throws IOException {
         ProvisioningProfile provisioningProfile = getProvisioningProfile();
         if (provisioningProfile == null) {
-            throw new RuntimeException("Provisioning profile not found");
+            throw new RuntimeException("Provisioning profile not found.\n" +
+                    "Please check https://docs.gluonhq.com/client/ for more information.");
         }
         Path provisioningProfilePath = provisioningProfile.getPath();
         Path dest = appPath.resolve("embedded.mobileprovision");
@@ -946,11 +947,11 @@ public class IosTargetProcess extends DarwinTargetProcess {
         Pointer clientPointer = lockDown();
         Logger.logDebug("umbrella cp after lockdown = "+clientPointer);
         if (! uploadInternal()) {
-            Logger.logInfo("Upload internal failed");
+            Logger.logInfo("Error: Upload internal failed");
             return false;
         }
         if (! installInternal()) {
-            Logger.logInfo("Install internal failed");
+            Logger.logInfo("Error: Install internal failed");
             return false;
         }
         Logger.logDebug("umbrella cp will unlock = "+clientPointer);
@@ -1143,9 +1144,11 @@ public class IosTargetProcess extends DarwinTargetProcess {
                                     Object e = hm.get("Error");
                                     if (hm.containsKey("ErrorDescription")) {
                                         Object d = hm.get("ErrorDescription");
-                                        Logger.logInfo("Error: " + e + ", Description: " + d);
+                                        Logger.logInfo("Error: " + e + ", Description: " + d + "\n" +
+                                            "Please check https://docs.gluonhq.com/client/ for more information.");
                                     } else {
-                                        Logger.logInfo("Error: " + e);
+                                        Logger.logInfo("Error: " + e + "\n" +
+                                                "Please check https://docs.gluonhq.com/client/ for more information.");
                                     }
                                     error = true;
                                     latch.countDown();
@@ -1191,7 +1194,6 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         } catch (Throwable t1) {
             Logger.logSevere(t1, "Error in installInternal");
-            t1.printStackTrace();
             return false;
         } finally {
             Logger.logDebug("Freeing lockdownclientpointer at " + lockdownClientPointer);
@@ -1253,13 +1255,13 @@ public class IosTargetProcess extends DarwinTargetProcess {
     }
 
     private String getAppPath(Pointer lockDownPointer, String appPath) throws IOException {
-        Logger.logDebug("search apppath for "+appPath);
+        Logger.logDebug("search app path for "+appPath);
         Pointer servicePointer = mobileDeviceBridge.startService(lockDownPointer, "com.apple.mobile.installation_proxy");
         Pointer newInstProxyClientPointer = mobileDeviceBridge.newInstProxyClient(devicePointer, servicePointer);
         String path = mobileDeviceBridge.getAppPath(newInstProxyClientPointer, appPath);
         if (path == null) {
             mobileDeviceBridge.listApps(newInstProxyClientPointer);
-            Logger.logSevere("Path not found, exit now");
+            Logger.logSevere("Path for " + appPath + " was not found, exiting now");
             System.exit(0);
         }
         Logger.logDebug("path = "+path);
