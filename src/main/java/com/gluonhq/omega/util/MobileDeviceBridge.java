@@ -54,11 +54,11 @@ public class MobileDeviceBridge {
     public final static String INSTPROXY_SERVICE_NAME = "com.apple.mobile.installation_proxy";
 
     private MobileDeviceBridge() {
-        // System.out.println("[MDB] Create BRIDGE");
+        Logger.logDebug("MobileDeviceBridge :: Create bridge");
     }
 
     public void init() {
-        // System.out.println("[MDB] Prepare device");
+        Logger.logDebug("MobileDeviceBridge Prepare device");
 
         Path f = FileOps.copyResourceToTmp("/native/ios/libimobiledevice.dylib");
         String libloc = f.toAbsolutePath().toString();
@@ -74,10 +74,10 @@ public class MobileDeviceBridge {
 
     public String[] getDeviceIds() {
         if (!isReady()) {
-            System.err.println("No iDevice found, fail");
+            Logger.logSevere("No iDevice found, fail");
             return null;
         }
-        // System.out.println("[MDB] getDeviceIds");
+        Logger.logDebug("MobileDeviceBridge :: get deviceIds");
 
         List<String> answer = new ArrayList<>();
         Pointer countPointer = Memory.allocate(runtime, 4);
@@ -90,20 +90,18 @@ public class MobileDeviceBridge {
             String[] nts = p0.getNullTerminatedStringArray(0);
             answer.addAll(Arrays.asList(nts));
         }
-        System.err.println("# connected devices = " + size);
+        Logger.logDebug("# connected devices = " + size);
         return answer.toArray( new String[0]);
     }
 
     public Pointer getDevice(String deviceId) {
-        //  System.out.println("[MDB] getDevice");
-
         Pointer devicePointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         iDevice.idevice_new(devicePointer, deviceId);
         return devicePointer;
     }
 
     public Pointer connectDevice(Pointer devicePointer, int port) {
-        //   System.out.println("[MDB] connectDevice");
+        Logger.logDebug("MobileDeviceBridge :: connect device");
         Pointer device = devicePointer.getPointer(0);
         Pointer connectionPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         iDevice.idevice_connect(device, (short) port, connectionPointer);
@@ -111,7 +109,6 @@ public class MobileDeviceBridge {
     }
 
     public int sendData(Pointer connectionPointer, byte[] b) {
-        //    System.out.println("[MDB] sendData, size = "+b.length);
         Pointer Connection = connectionPointer.getPointer(0);
         Pointer sentCountPointer = Memory.allocate(runtime, 4);
 
@@ -121,7 +118,6 @@ public class MobileDeviceBridge {
     }
 
     public int receiveData(Pointer connectionPointer, byte[] b, int offset, int len, int timeout) {
-        //     System.out.println("[MDB] receiveData ");
         Pointer Connection = connectionPointer.getPointer(0);
         Pointer receivedCountPointer = Memory.allocate(runtime, 4);
         iDevice.idevice_connection_receive(Connection, b, b.length, receivedCountPointer, timeout);
@@ -130,36 +126,35 @@ public class MobileDeviceBridge {
     }
 
     public Pointer lockdownClient(Pointer devicePointer, String label) throws IllegalArgumentException {
-        //    System.out.println("[MDB] lockdownClient ");
+        Logger.logDebug("MobileDeviceBridge :: lockdownClient ");
         Pointer lockdownClientPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         Pointer device = devicePointer.getPointer(0);
         int result = iDevice.lockdownd_client_new_with_handshake(device, lockdownClientPointer, label);
-        System.err.println("result of lockdown for device "+device+" with label "+label+" = "+result+" returns pointer "+lockdownClientPointer);
+        Logger.logDebug("Result of lockdown for device "+device+" with label "+label+" = "+result+" returns pointer "+lockdownClientPointer);
         if (result != 0) {
-            throw new IllegalArgumentException ("result of lockdown is "+result);
+            throw new IllegalArgumentException ("Result of lockdown is " + result);
         }
         return lockdownClientPointer;
     }
 
     public void unlockClient(Pointer p) {
-        //   System.out.println("[MDB] unlockdownClient ");
+        Logger.logDebug("MobileDeviceBridge :: unlockdownClient ");
         Pointer client = p.getPointer(0);
         int result = iDevice.lockdownd_client_free(client);
-        System.err.println("result of unlock = "+result);
+        Logger.logDebug("Result of unlock = " + result);
         if (result != 0) {
             throw new IllegalArgumentException ("result of lockdown is "+result);
         }
     }
 
     public Pointer getPlistPointer(byte[] b, int offset, long size) {
-        //   System.out.println("[MDB] getPlistPointer");
         Pointer plistPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         iDevice.plist_from_bin(b, size, plistPointer);
         return plistPointer;
     }
 
     public Object getValue (Pointer lockdownClientPointer, String domain, String key) throws IOException {
-        System.err.println("[MDB] getValue for key "+key);
+        Logger.logDebug("MobileDeviceBridge :: getValue for key " + key);
         Pointer lockdownClient = lockdownClientPointer.getPointer(0);
         Pointer plistPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         int result = iDevice.lockdownd_get_value(lockdownClient, domain, key, plistPointer);
@@ -171,72 +166,59 @@ public class MobileDeviceBridge {
     }
 
     public NSObject getValueFromPlist (Pointer plist) throws IOException {
-        //  System.out.println("[MDB] getValueFromPlist");
-
         Pointer contentPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         Pointer lengthPointer = Memory.allocate(runtime, 4);
         iDevice.plist_to_bin(plist, contentPointer, lengthPointer);
         int count = lengthPointer.getInt(0);
-        System.err.println("getValueFromPlist, count = "+count);
+        Logger.logDebug("getValueFromPlist, count = "+count);
         if (count > 0) {
             byte[] b = new byte[count];
             Pointer content = contentPointer.getPointer(0);
-//            System.err.println("cp = "+contentPointer+" and content at "+content);
-//            System.err.println("cpa? "+contentPointer.hasArray()+" and ca? "+content.hasArray());
-            //  System.err.println("cpa? "+contentPointer.arrayLength()+" and ca "+content.arrayLength());
             content.get(0, b, 0, count);
             try {
                 NSObject nsObject = PropertyListParser.parse(b);
-                //   System.err.println("nsObject = "+nsObject);
                 Object jo = nsObject.toJavaObject();
-                //       System.err.println("jo = "+jo);
                 return nsObject;
-
             } catch (Exception ex) {
-                System.err.println("Failed getting values from PList: " + ex);
+                Logger.logSevere("Failed getting values from PList: " + ex);
             }
         }
         return null;
     }
 
     public Pointer startService(Pointer lockdownClientPointer, String identifier) {
-        //  System.out.println("[MDB] startService "+identifier);
+        Logger.logDebug("MobileDeviceBridge :: startService for " + identifier);
         Pointer lockdownServiceDescriptorPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
 
         Pointer lockdownClient = lockdownClientPointer.getPointer(0);
         int result = iDevice.lockdownd_start_service(lockdownClient, identifier, lockdownServiceDescriptorPointer);
-        System.err.println("result of startservice = "+result);
+        Logger.logDebug("MobileDeviceBridge :: result of startservice = "+result);
         if (result == -17) {
-            System.err.println("Device is locked");
+            Logger.logSevere("Device is locked");
             throw new IllegalArgumentException ("Device is locked!");
-        }
-        if (result != 0) {
+        } else if (result != 0) {
             throw new IllegalArgumentException ("result of lockdownd_start_service is "+result);
         }
         return lockdownServiceDescriptorPointer;
     }
 
     public Pointer newAfcClient(Pointer devicePointer, Pointer lockdownServiceDescriptorPointer) {
-        //  System.out.println("[MDB] newAfcClient");
         Pointer afcClientPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         Pointer device = devicePointer.getPointer(0);
         Pointer lockdownServiceDescriptor = lockdownServiceDescriptorPointer.getPointer(0);
         int result = iDevice.afc_client_new(device, lockdownServiceDescriptor, afcClientPointer);
-        System.err.println("result of newAfcClient = "+result);
+        Logger.logDebug("Result of newAfcClient = "+result);
         return afcClientPointer;
     }
 
     public void freeAfcClient(Pointer afcClientPointer) {
-        //    System.out.println("[MDB] freeAfcClient");
-
         Pointer afcClient = afcClientPointer.getPointer(0);
         int result = iDevice.afc_client_free(afcClient);
-        System.err.println("result of freeAfcClient = "+result);
+        Logger.logDebug("Result of freeAfcClient = "+result);
         if (result != 0) throw new RuntimeException ("FreeAfcClient failed");
     }
 
     public void makeDirectory(Pointer afcClientPointer, String name) {
-        //    System.out.println("[MDB] makedirectory");
         Pointer afcClient = afcClientPointer.getPointer(0);
         int result = iDevice.afc_make_directory(afcClient, name);
         if (result != 0) {
@@ -245,7 +227,6 @@ public class MobileDeviceBridge {
     }
 
     public long fileOpen(Pointer afcClientPointer, String name, int mode) {
-//        System.out.println("[MDB] fileOpen");
         Pointer afcClient = afcClientPointer.getPointer(0);
         Pointer handlePointer =  Memory.allocateDirect(runtime, 8);
         iDevice.afc_file_open(afcClient, name, mode, handlePointer);
@@ -254,7 +235,6 @@ public class MobileDeviceBridge {
     }
 
     public void fileClose(Pointer afcClientPointer, long handle) {
-//        System.out.println("[MDB] fileClose");
         Pointer afcClient = afcClientPointer.getPointer(0);
         int result = iDevice.afc_file_close(afcClient, handle);
         if (result != 0) {
@@ -263,7 +243,6 @@ public class MobileDeviceBridge {
     }
 
     public int writeBytes (Pointer afcClientPointer, long handle, byte[] b,  long size) {
-//        System.out.println("[MDB] writeBytes");
         Pointer afcClient = afcClientPointer.getPointer(0);
         Pointer bytesWrittenPointer =  Memory.allocateDirect(runtime, 4);
         iDevice.afc_file_write(afcClient, handle, b, (int)size, bytesWrittenPointer);
@@ -271,17 +250,14 @@ public class MobileDeviceBridge {
     }
 
     public void makeSymLink (Pointer afcClientPointer, String target, String source) {
-        //   System.out.println("[MDB] makeSymLink");
         makeLink (afcClientPointer, 2, target, source);
     }
 
     public void makeHardLink (Pointer afcClientPointer, String target, String source) {
-        //   System.out.println("[MDB] makeHardLink");
         makeLink (afcClientPointer, 1, target, source);
     }
 
     public void makeLink (Pointer afcClientPointer, int type, String target, String source) {
-        //     System.out.println("[MDB] makeLink");
         Pointer afcClient = afcClientPointer.getPointer(0);
         int result = iDevice.afc_make_link(afcClient, type, target, source);
         if (result != 0) {
@@ -290,80 +266,73 @@ public class MobileDeviceBridge {
     }
 
     public Pointer newInstProxyClient(Pointer devicePointer, Pointer lockdownServiceDescriptorPointer) {
-        //    System.out.println("[MDB] newInstProxyClient");
         Pointer instProxyClientPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         Pointer device = devicePointer.getPointer(0);
         Pointer lockdownServiceDescriptor = lockdownServiceDescriptorPointer.getPointer(0);
         int result = iDevice.instproxy_client_new(device, lockdownServiceDescriptor, instProxyClientPointer);
-        System.err.println("result of newInstProxyClient = "+result);
+        Logger.logDebug("Result of newInstProxyClient = "+result);
         return instProxyClientPointer;
     }
 
     public void freeInstProxyClient (Pointer instProxyClientPointer) {
-        //    System.out.println("[MDB] freeInstProxyClient");
         Pointer instproxyClient = instProxyClientPointer.getPointer(0);
         int result = iDevice.instproxy_client_free(instproxyClient);
-        System.err.println("result of instproxy_client_free = "+result);
+        Logger.logDebug("Result of instproxy_client_free = "+result);
         if (result != 0) throw new RuntimeException ("error freeing instproxyClient!");
     }
 
     public ErrorCode instProxyUpgrade (Pointer instProxyClientPointer, String path, Pointer clientOptionsPointer, InstproxyStatusCallback statusCallback, Pointer userData) {
-        //    System.out.println("[MDB] instProxyUpgrade");
         Pointer instProxyClient = instProxyClientPointer.getPointer(0);
         Pointer clientOptions = clientOptionsPointer.getPointer(0);
         if (clientOptions == null) {
             //  clientOptions = Memory.allocate(runtime, NativeType.ADDRESS);
-            System.err.println("Pass NULL client options");
+            Logger.logSevere("MobileDeviceBridge :: Pass NULL client options");
         }
-        System.err.println("about to call instproxyupgrade");
+        Logger.logDebug("About to call instproxyupgrade");
         int resultCode = iDevice.instproxy_upgrade(instProxyClient, path, clientOptions, statusCallback, userData);
         ErrorCode result = ErrorCode.valueOf(resultCode);
-        System.err.println("result of instProxyUpgrad = "+result);
+        Logger.logDebug("Result of instProxyUpgrad = "+result);
         return result;
     }
 
 
     public List<String> listApps(Pointer instProxyClientPointer) throws IOException {
-        //    System.out.println("[MDB] listApps");
         Pointer instProxyClient = instProxyClientPointer.getPointer(0);
         Pointer resultPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         iDevice.instproxy_browse(instProxyClient, null, resultPointer);
         Pointer plist = resultPointer.getPointer(0);
         NSArray nsArray = (NSArray) getValueFromPlist(plist);
         int count = nsArray.count();
-        System.err.println("LIST APPS returns " + count + " apps.");
+        Logger.logDebug("List Apps returns: " + count + " apps");
         List<String> answer = new ArrayList<>();
         for ( NSObject obj: nsArray.getArray()) {
             NSDictionaryEx dict = new NSDictionaryEx( (NSDictionary) obj);
             String bundleId = dict.getString("CFBundleIdentifier");
             answer.add(bundleId);
-            System.err.println("BundleID: "+bundleId);
             String nPath = dict.getString("Path");
-            System.err.println("nPath = "+nPath);
+            Logger.logDebug("BundleID: "+bundleId + ", nPath = "+nPath);
         }
         return answer;
     }
 
     public String getAppPath(Pointer instProxyClientPointer, String p) throws IOException {
-        //     System.out.println("[MDB] getAppPath");
-        System.err.println("GETAPPPATH FOR "+p);
+        Logger.logDebug("Get App Path for: " + p);
         Pointer instProxyClient = instProxyClientPointer.getPointer(0);
         Pointer resultPointer = Memory.allocateDirect(runtime, NativeType.ADDRESS);
         iDevice.instproxy_browse(instProxyClient, null, resultPointer);
         Pointer plist = resultPointer.getPointer(0);
         NSArray nsArray = (NSArray) getValueFromPlist(plist);
 
-        for( NSObject obj: nsArray.getArray()) {
+        for (NSObject obj : nsArray.getArray()) {
             NSDictionaryEx dict = new NSDictionaryEx((NSDictionary) obj);
             String bts = dict.getString("CFBundleIdentifier");
             if (bts.equals(p)) {
                 String nPath = dict.getString("Path");
-                System.err.println("We have a bundleIdentifier with the requested path, return "+nPath);
+                Logger.logDebug("We have a bundleIdentifier with the requested path: " + nPath);
                 return nPath;
-            } else {
-                // System.err.println("and bid = "+bts+" and sizep = "+p.length()+" and sizep = "+bts.length());
             }
         }
+        Logger.logSevere("No bundleIdentifier found for " + p);
         return null;
     }
 

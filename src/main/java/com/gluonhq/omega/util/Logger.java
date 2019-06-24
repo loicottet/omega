@@ -29,20 +29,31 @@ package com.gluonhq.omega.util;
 
 import com.gluonhq.omega.Omega;
 
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.SimpleFormatter;
+
 public class Logger {
 
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Logger.class.getName());
+    private static ConsoleHandler consoleHandler;
+    private static FileHandler fileHandler;
+
     public static void logInfo(String s) {
-        System.err.println(s);
+        LOGGER.info(s);
     }
 
     public static void logDebug(String s) {
-        if (Omega.getConfiguration().isVerbose()) {
-            System.err.println(s);
-        }
+        LOGGER.fine(s);
+    }
+
+    public static void logFinest(String s) {
+        LOGGER.finest(s);
     }
 
     public static void logSevere(String s) {
-        System.err.println(s);
+        LOGGER.severe(s);
     }
 
     public static void logSevere(Throwable ex, String s) {
@@ -50,4 +61,32 @@ public class Logger {
         ex.printStackTrace();
         throw new RuntimeException ("Severe Error " + ex);
     }
+
+
+    public static void logInit(String message) {
+        System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tc][%4$s] %5$s%n"); // [Date][Level] Message
+        try {
+            if (consoleHandler == null) {
+                consoleHandler = new ConsoleHandler();
+                consoleHandler.setLevel(Omega.getConfiguration().isVerbose() ? Level.FINE : Level.INFO);
+                consoleHandler.setFormatter(new SimpleFormatter());
+                LOGGER.addHandler(consoleHandler);
+            }
+
+            if (fileHandler != null) {
+                LOGGER.removeHandler(fileHandler);
+            }
+
+            fileHandler = new FileHandler(Omega.getPaths().getLogPath().toString() + "/client-debug%g.log",
+                    10_485_760L, 10,
+                    true);
+            fileHandler.setLevel(Level.ALL);
+            fileHandler.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(fileHandler);
+        } catch (Exception e) {
+            LOGGER.severe("Error: Logger couldn't be created");
+        }
+        LOGGER.fine(message);
+    }
+
 }

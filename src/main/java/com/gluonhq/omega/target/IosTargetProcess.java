@@ -311,7 +311,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
         ProcessBuilder linkBuilder = new ProcessBuilder("clang");
         linkBuilder.command().add("-w");
         linkBuilder.command().add("-o");
-        linkBuilder.command().add(appPath.toString() + "/" + appName + "App");
+        linkBuilder.command().add(appPath.toString() + "/" + getExecutableName(appName));
         linkBuilder.command().add("-Wl,-no_implicit_dylibs");
         if (!"llvm".equals(Omega.getConfiguration().getBackend())) {
             linkBuilder.command().add("-Wl,-dead_strip");
@@ -539,7 +539,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                 "-Dprism.debugfonts=true");
     }
 
-    private String getBundleId() throws IOException {
+    private String getBundleId() {
         Path plist = rootPath.resolve("Default-Info.plist");
         if (! plist.toFile().exists()) {
             String className = Omega.getConfiguration().getMainClassName();
@@ -554,7 +554,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                         .filter(e -> e.getKey().equals("CFBundleIdentifier"))
                         .findFirst()
                         .map(e -> {
-                            Logger.logInfo("BUNDLE ID = " + e.getValue().toString());
+                            Logger.logDebug("Got Bundle ID = " + e.getValue().toString());
                             return e.getValue().toString();
                         })
                         .orElse("");
@@ -563,7 +563,32 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         }
         Logger.logSevere("Error: no bundleId was found");
-        return "";
+        throw new RuntimeException("No bundleId was found.\n " +
+                "Please check the src/ios/Default-info.plist file and make sure CFBundleIdentifier key exists");
+    }
+
+    private String getExecutableName(String appName) {
+        Path plist = rootPath.resolve("Default-Info.plist");
+        if (! plist.toFile().exists()) {
+            return appName + "App";
+        } else {
+            try {
+                NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
+                return dict.getEntrySet().stream()
+                        .filter(e -> e.getKey().equals("CFBundleExecutable"))
+                        .findFirst()
+                        .map(e -> {
+                            Logger.logDebug("Executable Name = " + e.getValue().toString());
+                            return e.getValue().toString();
+                        })
+                        .orElse("");
+            } catch (Exception ex) {
+                Logger.logSevere(ex, "Could not process CFBundleExecutable");
+            }
+        }
+        Logger.logSevere("Error: ExecutableName was found");
+        throw new RuntimeException("No executable name was found.\n " +
+                "Please check the src/ios/Default-info.plist file and make sure CFBundleExecutable key exists");
     }
 
     private void processInfoPlist(Path workDir) throws IOException {
@@ -590,7 +615,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                     className = className.substring(className.indexOf("/") + 1);
                 }
                 dict.put("CFBundleIdentifier", className);
-                dict.put("CFBundleExecutable", Omega.getConfiguration().getAppName() + "App");
+                dict.put("CFBundleExecutable", getExecutableName(Omega.getConfiguration().getAppName()));
                 dict.put("CFBundleName", Omega.getConfiguration().getAppName());
                 dict.saveAsXML(plist);
             }
@@ -627,7 +652,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
             orderedDict.saveAsXML(tmpPath.resolve("Info.plist"));
             orderedDict.getEntrySet().forEach(e -> {
                         if (e.getKey().equals("CFBundleIdentifier")) {
-                            Logger.logInfo("BUNDLE ID = "+e.getValue().toString());
+                            Logger.logDebug("Bundle ID = "+e.getValue().toString());
                             bundleId = e.getValue().toString();
                         }
                         Logger.logDebug("Info.plist Entry: " + e);
@@ -677,7 +702,8 @@ public class IosTargetProcess extends DarwinTargetProcess {
     private void signApp() throws IOException {
         ProvisioningProfile provisioningProfile = getProvisioningProfile();
         if (provisioningProfile == null) {
-            throw new RuntimeException("Provisioning profile not found");
+            throw new RuntimeException("Provisioning profile not found.\n" +
+                    "Please check https://docs.gluonhq.com/client/ for more information.");
         }
         Path provisioningProfilePath = provisioningProfile.getPath();
         Path dest = appPath.resolve("embedded.mobileprovision");
@@ -921,11 +947,11 @@ public class IosTargetProcess extends DarwinTargetProcess {
         Pointer clientPointer = lockDown();
         Logger.logDebug("umbrella cp after lockdown = "+clientPointer);
         if (! uploadInternal()) {
-            Logger.logInfo("Upload internal failed");
+            Logger.logInfo("Error: Upload internal failed");
             return false;
         }
         if (! installInternal()) {
-            Logger.logInfo("Install internal failed");
+            Logger.logInfo("Error: Install internal failed");
             return false;
         }
         Logger.logDebug("umbrella cp will unlock = "+clientPointer);
@@ -1118,9 +1144,11 @@ public class IosTargetProcess extends DarwinTargetProcess {
                                     Object e = hm.get("Error");
                                     if (hm.containsKey("ErrorDescription")) {
                                         Object d = hm.get("ErrorDescription");
-                                        Logger.logInfo("Error: " + e + ", Description: " + d);
+                                        Logger.logInfo("Error: " + e + ", Description: " + d + "\n" +
+                                            "Please check https://docs.gluonhq.com/client/ for more information.");
                                     } else {
-                                        Logger.logInfo("Error: " + e);
+                                        Logger.logInfo("Error: " + e + "\n" +
+                                                "Please check https://docs.gluonhq.com/client/ for more information.");
                                     }
                                     error = true;
                                     latch.countDown();
@@ -1166,7 +1194,6 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         } catch (Throwable t1) {
             Logger.logSevere(t1, "Error in installInternal");
-            t1.printStackTrace();
             return false;
         } finally {
             Logger.logDebug("Freeing lockdownclientpointer at " + lockdownClientPointer);
@@ -1205,7 +1232,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                             deviceIO.rerouteIO();
                         } catch (DeviceLockedException dle) {
                             //    unlock(lockDown);
-                            Logger.logSevere("Device locked! Press ENTER to try again");
+                            Logger.logSevere("Device locked! Please, unlock and press ENTER to try again");
                             System.in.read();
                             keepTrying = true;
                         }
@@ -1228,13 +1255,13 @@ public class IosTargetProcess extends DarwinTargetProcess {
     }
 
     private String getAppPath(Pointer lockDownPointer, String appPath) throws IOException {
-        Logger.logDebug("search apppath for "+appPath);
+        Logger.logDebug("search app path for "+appPath);
         Pointer servicePointer = mobileDeviceBridge.startService(lockDownPointer, "com.apple.mobile.installation_proxy");
         Pointer newInstProxyClientPointer = mobileDeviceBridge.newInstProxyClient(devicePointer, servicePointer);
         String path = mobileDeviceBridge.getAppPath(newInstProxyClientPointer, appPath);
         if (path == null) {
             mobileDeviceBridge.listApps(newInstProxyClientPointer);
-            Logger.logSevere("Path not found, exit now");
+            Logger.logSevere("Path for " + appPath + " was not found, exiting now");
             System.exit(0);
         }
         Logger.logDebug("path = "+path);

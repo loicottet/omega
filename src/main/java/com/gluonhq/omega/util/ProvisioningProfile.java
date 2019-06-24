@@ -125,7 +125,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
 
         Path dir = Paths.get(System.getProperty("user.home"),"Library/MobileDevice/Provisioning Profiles");
         if ( !Files.exists(dir) || !Files.isDirectory(dir)) {
-            System.out.println("OUCH, can't find provisioning profiles!");
+            Logger.logSevere("OUCH, can't find provisioning profiles at " + dir.toString());
             return Collections.emptyList();
         }
 
@@ -138,7 +138,6 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
                     .filter(p -> ! p.expirationDate.isBefore(now))
                     .sorted()
                     .collect(Collectors.toList());
-//            System.out.println("PROVISIONINGLIST = "+collect);
             return collect;
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -152,7 +151,7 @@ public class ProvisioningProfile implements Comparable<ProvisioningProfile> {
             byte[] content = (byte[]) data.getSignedContent().getContent();
             NSDictionaryEx dict = new NSDictionaryEx(content);
             ProvisioningProfile provisioningProfile = new ProvisioningProfile(file, dict);
-        //    System.out.println("Created provisioningprofile for "+file+" results in "+provisioningProfile);
+            Logger.logDebug("Created provisioningprofile for " + file + " results in " + provisioningProfile);
             return provisioningProfile;
         } catch (Exception e) {
             Logger.logSevere("Error creating provisioningprofile for " + file);

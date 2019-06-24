@@ -85,6 +85,7 @@ public class Constants {
     public static final String SOURCE_PATH = "src";
     public static final String TMP_PATH = "tmp";
     public static final String LIB_PATH = "lib";
+    public static final String LOG_PATH = "log";
 
     /**
      * Archs

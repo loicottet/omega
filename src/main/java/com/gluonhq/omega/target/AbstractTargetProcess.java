@@ -28,6 +28,7 @@
 package com.gluonhq.omega.target;
 
 import com.gluonhq.omega.Omega;
+import com.gluonhq.omega.util.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -258,7 +259,9 @@ public abstract class AbstractTargetProcess implements TargetProcess {
             "com.sun.glass.ui.Menu",
             "com.sun.glass.ui.MenuItem$Callback",
             "com.sun.glass.ui.View",
-            "com.sun.glass.ui.Size"
+            "com.sun.glass.ui.Size",
+            "com.sun.glass.ui.CommonDialogs$ExtensionFilter",
+            "com.sun.glass.ui.CommonDialogs$FileChooserResult"
     ));
 
     private static final List<String> releaseSymbolsList = Arrays.asList(
@@ -310,6 +313,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
         this.mainClassName = mainClassName;
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
+        Logger.logInit("==================== COMPILE TASK ====================");
         compileAdditionalSources();
         compileApplication();
     }
@@ -320,6 +324,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
         this.workDir = Omega.getPaths().getTmpPath();
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
+        Logger.logInit("==================== LINK TASK ====================");
     }
 
     @Override
@@ -327,6 +332,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
         this.workDir = Omega.getPaths().getClientPath();
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
+        Logger.logInit("==================== RUN TASK ====================");
     }
 
 }
