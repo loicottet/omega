@@ -311,7 +311,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
         ProcessBuilder linkBuilder = new ProcessBuilder("clang");
         linkBuilder.command().add("-w");
         linkBuilder.command().add("-o");
-        linkBuilder.command().add(appPath.toString() + "/" + appName + "App");
+        linkBuilder.command().add(appPath.toString() + "/" + getExecutableName(appName));
         linkBuilder.command().add("-Wl,-no_implicit_dylibs");
         if (!"llvm".equals(Omega.getConfiguration().getBackend())) {
             linkBuilder.command().add("-Wl,-dead_strip");
@@ -539,7 +539,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                 "-Dprism.debugfonts=true");
     }
 
-    private String getBundleId() throws IOException {
+    private String getBundleId() {
         Path plist = rootPath.resolve("Default-Info.plist");
         if (! plist.toFile().exists()) {
             String className = Omega.getConfiguration().getMainClassName();
@@ -554,7 +554,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                         .filter(e -> e.getKey().equals("CFBundleIdentifier"))
                         .findFirst()
                         .map(e -> {
-                            Logger.logInfo("BUNDLE ID = " + e.getValue().toString());
+                            Logger.logDebug("Got Bundle ID = " + e.getValue().toString());
                             return e.getValue().toString();
                         })
                         .orElse("");
@@ -563,6 +563,29 @@ public class IosTargetProcess extends DarwinTargetProcess {
             }
         }
         Logger.logSevere("Error: no bundleId was found");
+        return "";
+    }
+
+    private String getExecutableName(String appName) {
+        Path plist = rootPath.resolve("Default-Info.plist");
+        if (! plist.toFile().exists()) {
+            return appName + "App";
+        } else {
+            try {
+                NSDictionaryEx dict = new NSDictionaryEx(plist.toFile());
+                return dict.getEntrySet().stream()
+                        .filter(e -> e.getKey().equals("CFBundleExecutable"))
+                        .findFirst()
+                        .map(e -> {
+                            Logger.logDebug("Executable Name = " + e.getValue().toString());
+                            return e.getValue().toString();
+                        })
+                        .orElse("");
+            } catch (Exception ex) {
+                Logger.logSevere(ex, "Could not process CFBundleExecutable");
+            }
+        }
+        Logger.logSevere("Error: ExecutableName was found");
         return "";
     }
 
@@ -590,7 +613,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                     className = className.substring(className.indexOf("/") + 1);
                 }
                 dict.put("CFBundleIdentifier", className);
-                dict.put("CFBundleExecutable", Omega.getConfiguration().getAppName() + "App");
+                dict.put("CFBundleExecutable", getExecutableName(Omega.getConfiguration().getAppName()));
                 dict.put("CFBundleName", Omega.getConfiguration().getAppName());
                 dict.saveAsXML(plist);
             }
@@ -1205,7 +1228,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
                             deviceIO.rerouteIO();
                         } catch (DeviceLockedException dle) {
                             //    unlock(lockDown);
-                            Logger.logSevere("Device locked! Press ENTER to try again");
+                            Logger.logSevere("Device locked! Please, unlock and press ENTER to try again");
                             System.in.read();
                             keepTrying = true;
                         }
