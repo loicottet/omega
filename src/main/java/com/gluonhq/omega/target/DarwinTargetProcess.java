@@ -77,7 +77,7 @@ abstract class DarwinTargetProcess extends AbstractTargetProcess {
                 throw new RuntimeException("Couldn't find a relevant iOS SDK. Please mail support@gluonhq.com with the contents of " + mdir);
             }
             if (listFiles.length > 1) {
-                System.err.println("Warning, more than 1 iOS SDK found. Please look at the contents of " + mdir);
+                Logger.logSevere("Warning, more than 1 iOS SDK found. Please look at the contents of " + mdir);
             }
 
             String absolutePath = listFiles[0].getAbsolutePath();

@@ -59,7 +59,7 @@ public class DeviceIO {
     }
 
     public int rerouteIO() throws IOException  {
-        System.err.println("reroute stdio");
+        Logger.logDebug("DeviceIO::reroute stdio");
 
         // Talk to the debugserver using the GDB remote protocol.
         // See https://sourceware.org/gdb/onlinedocs/gdb/Remote-Protocol.html.
@@ -177,7 +177,7 @@ public class DeviceIO {
 
         byte[] buffer = new byte[1];
         mobileDeviceBridge.receiveData(connectionPointer, buffer, 0, buffer.length, RECEIVE_TIMEOUT);
-        System.err.println("Received ack: " + (char) buffer[0]);
+        Logger.logDebug("Received ack: " + (char) buffer[0]);
         return buffer[0] == '+';
     }
 
@@ -192,7 +192,7 @@ public class DeviceIO {
         if (!expectedResponse.equals(response)) {
             if (response.startsWith("E")) {
                 if ((response.length() > 5) && (response.toLowerCase().startsWith("elocked"))) {
-                    System.out.println("Device locked.");
+                    Logger.logSevere("Device locked.");
                     throw new DeviceLockedException();
                 }
                 throw new RuntimeException("Launch failed: " + response.substring(1));
@@ -320,7 +320,7 @@ public class DeviceIO {
     }
 
     private void kill() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }

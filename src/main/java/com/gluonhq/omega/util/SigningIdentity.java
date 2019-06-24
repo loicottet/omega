@@ -115,7 +115,7 @@ public class SigningIdentity  implements Comparable<SigningIdentity> {
             }
         }
         if (answer.size() == 0) {
-            System.out.println("Warning, no signing identities found");
+            Logger.logSevere("Warning, no signing identities found");
         }
         return answer;
     }

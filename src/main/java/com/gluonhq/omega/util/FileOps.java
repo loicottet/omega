@@ -62,9 +62,9 @@ public class FileOps {
 
     public static InputStream resourceAsStream(String res) {
         String actualResource = Objects.requireNonNull(res).startsWith(File.separator) ? res : File.separator + res;
-        System.err.println("Looking for "+res);
+        Logger.logDebug("Looking for resource: " + res);
         InputStream answer = Omega.class.getResourceAsStream(actualResource);
-        System.err.println("answer = "+answer);
+        Logger.logDebug("Resource found: " + answer);
         return answer;
     }
 
@@ -81,12 +81,12 @@ public class FileOps {
                 Files.createDirectories(destination.getParent() );
             }
             if (!parent.toFile().isDirectory()) {
-                System.out.println("Could not copy "+destination+" because it's parent already exists as a file!");
+                Logger.logSevere("Could not copy " + destination + " because its parent already exists as a file!");
             } else {
                 Files.copy(resourceStream, destination,  REPLACE_EXISTING);
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Logger.logSevere("Failed copying " + sourceStream + " to " + destination + ": " + ex);
         }
         return destination;
     }
@@ -108,7 +108,7 @@ public class FileOps {
         if (source.toFile().isDirectory()) {
             File f = source.toFile();
             String[] children = f.list();
-            for (String child: children) {
+            for (String child : children) {
                 copyDirectory (new File(f, child).toPath(), destination.resolve(child));
             }
         }
@@ -188,7 +188,7 @@ public class FileOps {
                     if (sb != null) {
                         sb.append(line);
                     }
-                    System.err.println("[SUB] " + line);
+                    Logger.logInfo("[SUB] " + line);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -219,7 +219,6 @@ public class FileOps {
             }
         }
         setExecutionPermissions(script);
-        return;
     }
 
     public static void setExecutionPermissions(Path path) throws IOException {

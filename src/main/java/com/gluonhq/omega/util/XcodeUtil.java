@@ -61,7 +61,7 @@ public class XcodeUtil {
         Path platformInfoFile  = rootDir.getParent().getParent().getParent().resolve("Info.plist");
         Path xcodeInfoFile     = rootDir.getParent().getParent().getParent().getParent().getParent().getParent().resolve("Info.plist");
         Path xcodeVersionFile  = rootDir.getParent().getParent().getParent().getParent().getParent().getParent().resolve("version.plist");
-        System.err.println("platformfile at " + platformInfoFile );
+        Logger.logDebug("platform info file at " + platformInfoFile);
         try {
             NSDictionaryEx systemVersionDict = new NSDictionaryEx(systemVersionFile);
             NSDictionaryEx platformInfoDict  = new NSDictionaryEx(platformInfoFile);
@@ -111,7 +111,7 @@ public class XcodeUtil {
     public static String getCommandForSdk(String command, String sdk) throws IOException {
         ProcessBuilder pb = new ProcessBuilder("xcrun", "-sdk", sdk, "-f", command);
         Process p = pb.start();
-        try( BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
             return br.readLine();
         }
     }
