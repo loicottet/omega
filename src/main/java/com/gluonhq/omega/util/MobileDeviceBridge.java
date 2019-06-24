@@ -113,14 +113,16 @@ public class MobileDeviceBridge {
         Pointer sentCountPointer = Memory.allocate(runtime, 4);
 
         iDevice.idevice_connection_send(Connection, b, b.length, sentCountPointer);
-        return sentCountPointer.getInt(0);
+        int count = sentCountPointer.getInt(0);
+        return count;
     }
 
     public int receiveData(Pointer connectionPointer, byte[] b, int offset, int len, int timeout) {
         Pointer Connection = connectionPointer.getPointer(0);
         Pointer receivedCountPointer = Memory.allocate(runtime, 4);
         iDevice.idevice_connection_receive(Connection, b, b.length, receivedCountPointer, timeout);
-        return receivedCountPointer.getInt(0);
+        int count = receivedCountPointer.getInt(0);
+        return count;
     }
 
     public Pointer lockdownClient(Pointer devicePointer, String label) throws IllegalArgumentException {
