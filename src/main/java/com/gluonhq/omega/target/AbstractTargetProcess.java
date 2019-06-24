@@ -28,6 +28,7 @@
 package com.gluonhq.omega.target;
 
 import com.gluonhq.omega.Omega;
+import com.gluonhq.omega.util.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -310,6 +311,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
         this.mainClassName = mainClassName;
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
+        Logger.logInit("==================== COMPILE TASK ====================");
         compileAdditionalSources();
         compileApplication();
     }
@@ -320,6 +322,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
         this.workDir = Omega.getPaths().getTmpPath();
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
+        Logger.logInit("==================== LINK TASK ====================");
     }
 
     @Override
@@ -327,6 +330,7 @@ public abstract class AbstractTargetProcess implements TargetProcess {
         this.workDir = Omega.getPaths().getClientPath();
         this.appName = appName;
         this.target = Omega.getConfiguration().getTarget().getOs();
+        Logger.logInit("==================== RUN TASK ====================");
     }
 
 }

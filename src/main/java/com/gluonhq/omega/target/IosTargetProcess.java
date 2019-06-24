@@ -652,7 +652,7 @@ public class IosTargetProcess extends DarwinTargetProcess {
             orderedDict.saveAsXML(tmpPath.resolve("Info.plist"));
             orderedDict.getEntrySet().forEach(e -> {
                         if (e.getKey().equals("CFBundleIdentifier")) {
-                            Logger.logInfo("BUNDLE ID = "+e.getValue().toString());
+                            Logger.logDebug("Bundle ID = "+e.getValue().toString());
                             bundleId = e.getValue().toString();
                         }
                         Logger.logDebug("Info.plist Entry: " + e);
