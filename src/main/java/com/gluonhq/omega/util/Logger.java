@@ -70,7 +70,9 @@ public class Logger {
             consoleHandler.setFormatter(new SimpleFormatter());
             LOGGER.addHandler(consoleHandler);
 
-            FileHandler fileHandler = new FileHandler(Omega.getPaths().getTmpPath().toString() + "/client-debug.log", true);
+            FileHandler fileHandler = new FileHandler(Omega.getPaths().getTmpPath().toString() + "/client-debug.log",
+                    10 * 1024 * 1024, 10,
+                    true);
             fileHandler.setLevel(Level.ALL);
             fileHandler.setFormatter(new SimpleFormatter());
             LOGGER.addHandler(fileHandler);
