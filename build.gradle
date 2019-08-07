@@ -3,7 +3,7 @@ apply plugin: 'application'
 apply plugin: 'maven-publish'
 
 group = "com.gluonhq"
-version = "0.0.12-SNAPSHOT"
+version = "0.0.13-SNAPSHOT"
 
 mainClassName = 'com.gluonhq.omega.Omega'
 
@@ -31,16 +31,16 @@ publishing {
         }
     }
     repositories {
-        maven {
-            def repositoryUrl = project.hasProperty('repositoryUrl') ? project.getProperty('repositoryUrl') : 'https://nexus.gluonhq.com/nexus/content/repositories/public-snapshots/'
-            def repositoryUsername = project.hasProperty('repositoryUsername') ? project.getProperty('repositoryUsername') : project.getProperty('gluonNexusUsername')
-            def repositoryPassword = project.hasProperty('repositoryPassword') ? project.getProperty('repositoryPassword') : project.getProperty('gluonNexusPassword')
-
-            url repositoryUrl
-            credentials {
-                username repositoryUsername
-                password repositoryPassword
-            }
-        }
+//        maven {
+//            def repositoryUrl = project.hasProperty('repositoryUrl') ? project.getProperty('repositoryUrl') : 'https://nexus.gluonhq.com/nexus/content/repositories/public-snapshots/'
+//            def repositoryUsername = project.hasProperty('repositoryUsername') ? project.getProperty('repositoryUsername') : project.getProperty('gluonNexusUsername')
+//            def repositoryPassword = project.hasProperty('repositoryPassword') ? project.getProperty('repositoryPassword') : project.getProperty('gluonNexusPassword')
+//
+//            url repositoryUrl
+//            credentials {
+//                username repositoryUsername
+//                password repositoryPassword
+//            }
+//        }
     }
 }

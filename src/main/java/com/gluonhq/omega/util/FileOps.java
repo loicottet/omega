@@ -116,6 +116,7 @@ public class FileOps {
 
     private static Path objectPath;
     public static Path findObject(Path workDir, String name) throws IOException {
+        objectPath = null;
 
         SimpleFileVisitor<Path> visitor = new SimpleFileVisitor<>() {
             @Override

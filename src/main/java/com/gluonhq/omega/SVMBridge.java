@@ -139,7 +139,7 @@ public class SVMBridge {
         // LIBS
         try {
             FileDeps.setupDependencies(omegaConfiguration);
-            if (omegaConfiguration.isUseLLVM()) {
+            if (omegaConfiguration.isUseLLVM() && Constants.ARM64_ARCH.equals(Omega.getConfiguration().getTarget().getArch())) {
                 String llcPath = Omega.getConfiguration().getLlcPath();
                 if (llcPath == null || llcPath.isEmpty()) {
                     Path llvmLib = Path.of(Omega.getConfiguration().getGraalLibsRoot()).getParent().resolve("llvm");
@@ -211,7 +211,7 @@ public class SVMBridge {
         if (Omega.getConfiguration().isUseJNI()) {
             if (targetProcess.isCrossCompile()) { // this is only the case for iOS/AArch64 for now
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AArch64");
-                linkedList.add("-Dsvm.targetArch=arm");
+                linkedList.add("-Dsvm.targetArch=arm64");
             } else if (Constants.HOST_MAC.equals(Omega.getConfiguration().getHost().getOs())) {
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.impl.InternalPlatform$DARWIN_JNI_AMD64");
             } else if (Constants.HOST_LINUX.equals(Omega.getConfiguration().getHost().getOs())) {
@@ -221,15 +221,8 @@ public class SVMBridge {
             // if we don't use JNI, go with the default platform unless target arch != build arch
             if (targetProcess.isCrossCompile()) { // we need a better check
                 linkedList.add("-Dsvm.platform=org.graalvm.nativeimage.Platform$DARWIN_AArch64");
-                linkedList.add("-Dsvm.targetArch=arm");
+                linkedList.add("-Dsvm.targetArch=arm64");
             }
-        }
-        if (USE_LLVM) {
-            String llcPath = Omega.getConfiguration().getLlcPath();
-            if (llcPath == null || llcPath.isEmpty()) {
-                llcPath = Path.of(Omega.getConfiguration().getGraalLibsRoot()).getParent().resolve("llvm").toString();
-            }
-            linkedList.add("-Dsvm.llvm.root=" + llcPath);
         }
         linkedList.add("-Dorg.graalvm.version=" + Omega.getConfiguration().getGraalLibsVersion());
         linkedList.add("-Dcom.oracle.graalvm.isaot=true");
@@ -332,7 +325,7 @@ public class SVMBridge {
             answer.add(Paths.get(GRAALSDK, "svm/builder/svm-llvm.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/graal-llvm.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-platform-specific.jar"));
-            answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-wrapper.jar"));
+            answer.add(Paths.get(GRAALSDK, "svm/builder/llvm-presets.jar"));
             answer.add(Paths.get(GRAALSDK, "svm/builder/javacpp.jar"));
         }
         return answer;
@@ -427,6 +420,9 @@ public class SVMBridge {
             runtimeArgs.add("-H:-AOTInline");
             runtimeArgs.add("-H:-SpawnIsolates");
             runtimeArgs.add("-H:+RuntimeAssertions");
+            if (Constants.ARM64_ARCH.equals(Omega.getConfiguration().getTarget().getArch())) {
+                runtimeArgs.add("-H:CustomLLC=" + Omega.getConfiguration().getLlcPath());
+            }
             runtimeArgs.add("-H:DumpLLVMStackMap=" + workDir + "/stackmap.txt");
         }
     }
